@@ -1,0 +1,11 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend
+    ports:
+      - "8080:8080" # host:container
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+    restart: unless-stopped
