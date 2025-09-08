@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   # Construye la imagen del backend una sola vez con este servicio;
   # app-2 reutiliza la misma imagen para evitar construir dos veces.
