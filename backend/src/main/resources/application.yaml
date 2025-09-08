@@ -1,0 +1,38 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+logging.level.org.springframework.security: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+jwt:
+  secret: ${JWT_SECRET:dev-secret-please-change}
+  expiration: 3600
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      streamSource:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+  retry:
+    instances:
+      streamSource:
+        maxAttempts: 3
+        waitDuration: 200ms
+        enableExponentialBackoff: true
+  timelimiter:
+    instances:
+      streamSource:
+        timeoutDuration: 2s
+  ratelimiter:
+    instances:
+      loginLimiter:
+        limitForPeriod: 5
+        limitRefreshPeriod: 1m
+        timeoutDuration: 0
