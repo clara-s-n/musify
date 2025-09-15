@@ -1,11 +1,70 @@
 services:
-  backend:
+  # Construye la imagen del backend una sola vez con este servicio;
+  # app-2 reutiliza la misma imagen para evitar construir dos veces.
+  backend-app-1:
     build:
       context: ./backend
-      dockerfile: Dockerfile
-    container_name: backend
-    ports:
-      - "8080:8080" # host:container
+    image: tfu-backend:local
+    container_name: backend-app-1
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      SERVER_PORT: 8080
+      JWT_SECRET: ${JWT_SECRET:-super-secret-change-me}
+    depends_on:
+      - flaky-service
     restart: unless-stopped
+    networks:
+      - app-net
+
+  backend-app-2:
+    image: tfu-backend:local # reutiliza la imagen construida por backend-app-1
+    container_name: backend-app-2
+    environment:
+      SERVER_PORT: 8080
+      JWT_SECRET: ${JWT_SECRET:-super-secret-change-me}
+    depends_on:
+      - backend-app-1 
+      - flaky-service
+# para asegurar orden de arranque en demo
+    restart: unless-stopped
+    networks:
+      - app-net
+
+  flaky-service:
+    build:
+      context: ./flaky-service
+    container_name: flaky-service
+    ports:
+      - "9090:9090" # expuesto solo para debug/demo
+    restart: unless-stopped
+    networks:
+      - app-net
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "8080:80" # entrada pública: http://localhost:8080
+    volumes:
+      - ./ops/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend-app-1
+      - backend-app-2
+    restart: unless-stopped
+    networks:
+      - app-net
+  postgres:
+    image: postgres:latest
+    environment:  
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+
+
+networks:
+  app-net:
+    driver: bridge

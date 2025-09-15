@@ -1,36 +1,28 @@
-# syntax=docker/dockerfile:1
-############################################
-# Etapa de build (usa Maven + JDK 21)
-############################################
-FROM maven:3.9-eclipse-temurin-21 AS build
-WORKDIR /app
 
-# Copiamos el pom para cachear dependencias
-COPY pom.xml ./
-
-# Pre-descarga de dependencias (mejora tiempos de build)
-# Usa BuildKit para cache (--mount) si está disponible; de lo contrario igual funciona.
-RUN mvn -B -ntp -DskipTests dependency:go-offline
-
-# Copiamos el código y construimos el fat jar
+# ====== Etapa 1: build ======
+# Imagen base con Maven y JDK 21 para compilar la aplicación
+FROM maven:3.9.9-eclipse-temurin-21 AS build
+# Directorio de trabajo para la build
+WORKDIR /build
+# Copia el archivo de dependencias
+COPY pom.xml .
+# Descarga dependencias y las guarda en caché para acelerar builds futuras
+RUN --mount=type=cache,target=/root/.m2 mvn -q -DskipTests dependency:go-offline
+# Copia el código fuente de la app
 COPY src ./src
-RUN mvn -B -ntp -DskipTests package
+# Compila el proyecto y genera el JAR
+RUN --mount=type=cache,target=/root/.m2 mvn -q -DskipTests package
 
-############################################
-# Etapa de runtime (JRE liviano)
-############################################
+# ====== Etapa 2: runtime ======
+# Imagen base liviana solo con JRE para ejecutar la app
 FROM eclipse-temurin:21-jre-alpine
+# Directorio de trabajo para la app ya compilada
 WORKDIR /app
-
-# Usuario no root
-RUN addgroup -S spring && adduser -S spring -G spring
-USER spring
-
-# Copiamos el jar generado (target/*.jar)
-COPY --from=build /app/target/*.jar app.jar
-
+# Copia el JAR generado en la etapa de build
+COPY --from=build /build/target/*-SNAPSHOT.jar /app/app.jar
+# Expone el puerto 8080 para el servicio
 EXPOSE 8080
-ENV JAVA_OPTS=""
-
-# Puedes pasar JAVA_OPTS desde compose (memoria, GC, etc.)
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+# Variable de entorno para el puerto
+ENV SERVER_PORT=8080
+# Comando de entrada para ejecutar la app Spring Boot
+ENTRYPOINT ["java","-jar","/app/app.jar"]
