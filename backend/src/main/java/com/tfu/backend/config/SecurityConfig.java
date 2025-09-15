@@ -40,7 +40,10 @@ public class SecurityConfig {
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http.csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/auth/**", "/v3/api-docs/**", "/swagger-ui/**", "/actuator/**").permitAll()
+            .requestMatchers("/auth/**", "/api/auth/**", "/tracks/**", "/api/tracks/**",
+                "/playback/**", "/api/playback/**",
+                "/v3/api-docs/**", "/swagger-ui/**", "/actuator/**")
+            .permitAll()
             .anyRequest().authenticated())
         .httpBasic(Customizer.withDefaults())
         .userDetailsService(userDetailsService); // Usamos nuestro servicio de detalles de usuario

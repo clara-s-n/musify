@@ -63,8 +63,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./database/init.sql:/docker-entrypoint-initdb.d/1_init.sql
-      - ./database/seed.sql:/docker-entrypoint-initdb.d/2_seed.sql
+      - ./database/01-init.sql:/docker-entrypoint-initdb.d/1_init.sql
+      - ./database/02-seed.sql:/docker-entrypoint-initdb.d/2_seed.sql
     networks:
       - app-net
 

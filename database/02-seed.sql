@@ -174,8 +174,8 @@ CREATE TABLE IF NOT EXISTS app_users (
 
 -- Insertar usuarios para pruebas de autenticación
 INSERT INTO app_users (username, password, email, enabled) VALUES
-  ('user', '{noop}password', 'user@test.com', true),
-  ('admin', '{noop}admin', 'admin@test.com', true);
+  ('user', '{noop}password', 'user@demo.com', true),
+  ('admin', '{noop}admin', 'admin@demo.com', true);
 
 -- Tabla de roles para manejo de permisos básicos
 CREATE TABLE IF NOT EXISTS app_roles (

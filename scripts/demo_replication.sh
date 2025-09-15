@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -e
 
 # Este script demuestra la táctica de disponibilidad mediante replicación:
 # 1. Replicación: Se ejecutan dos instancias del backend (app-1 y app-2)
