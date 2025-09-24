@@ -10,6 +10,7 @@ services:
       SERVER_PORT: 8080
       JWT_SECRET: ${JWT_SECRET:-super-secret-change-me}
     depends_on:
+      - postgres
       - flaky-service
     restart: unless-stopped
     networks:
@@ -22,9 +23,9 @@ services:
       SERVER_PORT: 8080
       JWT_SECRET: ${JWT_SECRET:-super-secret-change-me}
     depends_on:
-      - backend-app-1 
+      - postgres
       - flaky-service
-# para asegurar orden de arranque en demo
+      - backend-app-1 # para asegurar orden de arranque en demo
     restart: unless-stopped
     networks:
       - app-net
@@ -54,16 +55,18 @@ services:
       - app-net
   postgres:
     image: postgres:latest
-    environment:  
+    container_name: postgres
+    environment:
       POSTGRES_DB: mydatabase
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: secret
     ports:
       - "5432:5432"
     volumes:
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
-
-
+      - ./database/01-init.sql:/docker-entrypoint-initdb.d/1_init.sql
+      - ./database/02-seed.sql:/docker-entrypoint-initdb.d/2_seed.sql
+    networks:
+      - app-net
 
 networks:
   app-net:
