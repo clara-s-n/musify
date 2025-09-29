@@ -29,13 +29,13 @@ import java.util.function.Function;
 @Service
 public class JwtService {
   /** Secreto para firmar el JWT (inyectado desde configuración) */
-  @Value("${jwt.secret}")
+  @Value("${spring.security.jwt.secret:dev-secret-please-change}")
   private String secret;
 
   /**
    * Tiempo de expiración del token en segundos (inyectado desde configuración)
    */
-  @Value("${jwt.expiration}")
+  @Value("${spring.security.jwt.expiration:3600}")
   private long expiration;
 
   /**

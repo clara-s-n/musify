@@ -22,7 +22,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Configuración de seguridad para la aplicación.
@@ -82,7 +81,13 @@ public class SecurityConfig {
    * @return Proveedor de autenticación configurado
    */
   @Bean
+  @SuppressWarnings("deprecation") // Suprimimos las advertencias de deprecación
   public AuthenticationProvider authenticationProvider() {
+    // Nota: Algunos métodos/constructores están marcados como @deprecated pero
+    // todavía
+    // son la forma recomendada de configuración en Spring Security 6.x.
+    // Se mantendrán hasta determinar una mejor alternativa en actualizaciones
+    // futuras.
     DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
     authProvider.setUserDetailsService(userDetailsService);
     authProvider.setPasswordEncoder(passwordEncoder());
@@ -114,17 +119,45 @@ public class SecurityConfig {
   }
 
   /**
-   * Configura CORS para permitir solicitudes desde el frontend.
+   * Configura CORS para permitir solicitudes desde el frontend Angular.
    * 
    * @return Configuración CORS
    */
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(List.of("*")); // Para desarrollo. En producción, especificar orígenes concretos
-    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-    configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
-    configuration.setExposedHeaders(Arrays.asList("Authorization"));
+
+    // Permitir solicitudes desde el origen de desarrollo de Angular
+    configuration.setAllowedOrigins(Arrays.asList(
+        "http://localhost:4200", // Angular dev server
+        "http://localhost:8080", // Angular app servida desde Spring Boot
+        "http://localhost" // Otros puertos locales
+    ));
+
+    // Permitir todos los métodos HTTP comunes
+    configuration.setAllowedMethods(Arrays.asList(
+        "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
+
+    // Permitir todos los headers comunes
+    configuration.setAllowedHeaders(Arrays.asList(
+        "Authorization",
+        "Content-Type",
+        "X-Requested-With",
+        "Accept",
+        "Origin",
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers",
+        "X-XSRF-TOKEN"));
+
+    // Exponer headers que Angular necesita acceder
+    configuration.setExposedHeaders(Arrays.asList(
+        "Authorization",
+        "Content-Disposition"));
+
+    // Permitir credenciales (cookies, encabezados de autenticación)
+    configuration.setAllowCredentials(true);
+
+    // Tiempo de caché para respuestas preflight
     configuration.setMaxAge(3600L);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

@@ -22,6 +22,7 @@ services:
     environment:
       SERVER_PORT: 8080
       JWT_SECRET: ${JWT_SECRET:-super-secret-change-me}
+      SPRING_MAIN_ALLOW-BEAN-DEFINITION-OVERRIDING: "true"
     depends_on:
       - postgres
       - flaky-service

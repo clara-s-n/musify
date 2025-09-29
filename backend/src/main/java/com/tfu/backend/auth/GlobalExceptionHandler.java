@@ -18,10 +18,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Controlador global para el manejo de excepciones.
- * Centraliza la gestión de errores para toda la aplicación.
+ * Controlador global para el manejo de excepciones relacionadas con la autenticación.
+ * Centraliza la gestión de errores para el módulo de autenticación.
  */
-@RestControllerAdvice
+@RestControllerAdvice(value = "com.tfu.backend.auth", basePackageClasses = GlobalExceptionHandler.class)
 public class GlobalExceptionHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
