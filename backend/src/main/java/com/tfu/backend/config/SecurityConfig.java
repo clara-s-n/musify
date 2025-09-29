@@ -5,8 +5,6 @@ import com.tfu.backend.auth.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -69,29 +67,10 @@ public class SecurityConfig {
             .permitAll()
             .anyRequest().authenticated())
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authenticationProvider(authenticationProvider())
+        .userDetailsService(userDetailsService) // Usar directamente UserDetailsService
         .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
-  }
-
-  /**
-   * Configura el proveedor de autenticación.
-   * 
-   * @return Proveedor de autenticación configurado
-   */
-  @Bean
-  @SuppressWarnings("deprecation") // Suprimimos las advertencias de deprecación
-  public AuthenticationProvider authenticationProvider() {
-    // Nota: Algunos métodos/constructores están marcados como @deprecated pero
-    // todavía
-    // son la forma recomendada de configuración en Spring Security 6.x.
-    // Se mantendrán hasta determinar una mejor alternativa en actualizaciones
-    // futuras.
-    DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-    authProvider.setUserDetailsService(userDetailsService);
-    authProvider.setPasswordEncoder(passwordEncoder());
-    return authProvider;
   }
 
   /**
