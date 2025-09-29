@@ -22,6 +22,7 @@ import java.util.Map;
  * Centraliza la gestión de errores para el módulo de autenticación.
  */
 @RestControllerAdvice(value = "com.tfu.backend.auth", basePackageClasses = GlobalExceptionHandler.class)
+@org.springframework.core.annotation.Order(1)
 public class GlobalExceptionHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);

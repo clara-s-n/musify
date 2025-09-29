@@ -23,9 +23,9 @@ import java.util.Map;
  * Manejador global de excepciones para la API REST.
  * Proporciona un manejo centralizado y consistente de errores.
  */
-@RestControllerAdvice(value = "com.tfu.backend.common", basePackageClasses = GlobalExceptionHandler.class)
-public class GlobalExceptionHandler {
-  private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+@RestControllerAdvice(value = "com.tfu.backend.common")
+public class CommonExceptionHandler {
+  private static final Logger logger = LoggerFactory.getLogger(CommonExceptionHandler.class);
 
   /**
    * Maneja excepciones de autenticación.
@@ -88,10 +88,10 @@ public class GlobalExceptionHandler {
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public ResponseEntity<ApiResponse<Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
     logger.warn("Tipo de parámetro incorrecto: {}", ex.getName());
+    String tipoEsperado = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "válido";
     return ResponseEntity.badRequest()
         .body(ApiResponse.error("Tipo de parámetro incorrecto",
-            "El parámetro '" + ex.getName() + "' debe ser de tipo " +
-                ex.getRequiredType().getSimpleName()));
+            "El parámetro '" + ex.getName() + "' debe ser de tipo " + tipoEsperado));
   }
 
   /**
