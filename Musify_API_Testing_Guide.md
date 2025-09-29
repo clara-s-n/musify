@@ -13,6 +13,7 @@ Esta guía te ayudará a probar los endpoints de la API de Musify usando Postman
 ### 1. Autenticación
 
 1. **Registro de Usuario** (opcional si vas a usar las cuentas preexistentes)
+
    - Endpoint: `POST /auth/register`
    - Cuerpo: `{"username": "tu_usuario", "email": "tu@email.com", "password": "tu_password"}`
 
@@ -28,11 +29,9 @@ Esta guía te ayudará a probar los endpoints de la API de Musify usando Postman
 1. **Obtener todas las pistas**
    - Endpoint: `GET /tracks`
    - Requiere autenticación (token JWT)
-   
 2. **Buscar pistas**
    - Endpoint: `GET /tracks/search?q=pop`
    - Prueba diferentes términos de búsqueda
-   
 3. **Filtrar por género/artista/año**
    - Endpoint: `GET /tracks/by-genre?genre=Pop`
    - Endpoint: `GET /tracks/by-artist?artist=Ed Sheeran`
@@ -41,20 +40,19 @@ Esta guía te ayudará a probar los endpoints de la API de Musify usando Postman
 ### 3. Probar la Reproducción
 
 1. **Iniciar reproducción**
+
    - Endpoint: `POST /playback/start`
    - Cuerpo: `{"trackId": 1}`
    - Anota la URL de streaming devuelta
 
 2. **Consultar estado de reproducción**
    - Endpoint: `GET /playback/status`
-   
 3. **Pausar reproducción**
    - Endpoint: `POST /playback/pause`
-   
 4. **Reanudar reproducción**
    - Endpoint: `POST /playback/resume`
-   
 5. **Detener reproducción**
+
    - Endpoint: `POST /playback/stop`
 
 6. **Ver historial de reproducciones**
@@ -64,7 +62,6 @@ Esta guía te ayudará a probar los endpoints de la API de Musify usando Postman
 
 1. **Comprobar salud del sistema**
    - Endpoint: `GET /actuator/health`
-   
 2. **Explorar documentación**
    - OpenAPI JSON: `GET /v3/api-docs`
    - Swagger UI: `GET /swagger-ui.html` (o visita la URL en el navegador)
