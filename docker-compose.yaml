@@ -8,7 +8,13 @@ services:
     container_name: backend-app-1
     environment:
       SERVER_PORT: 8080
-      JWT_SECRET: ${JWT_SECRET:-zSUp3R-l0ng_S3cuR3_K3y_F0r_JWT_T0k3n_S1gn1ng_W1th_M0r3_Th4n_256_B1ts_0f_3ntr0py_12345678901234567890}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-3600}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_HOST: postgres
+      DB_PORT: 5432
     depends_on:
       - postgres
       - flaky-service
@@ -21,7 +27,13 @@ services:
     container_name: backend-app-2
     environment:
       SERVER_PORT: 8080
-      JWT_SECRET: ${JWT_SECRET:-zSUp3R-l0ng_S3cuR3_K3y_F0r_JWT_T0k3n_S1gn1ng_W1th_M0r3_Th4n_256_B1ts_0f_3ntr0py_12345678901234567890}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-3600}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_HOST: postgres
+      DB_PORT: 5432
       SPRING_MAIN_ALLOW-BEAN-DEFINITION-OVERRIDING: "true"
     depends_on:
       - postgres
@@ -71,14 +83,14 @@ services:
     command: sh -c "npm start"
     networks:
       - app-net
-      
+
   postgres:
     image: postgres:latest
     container_name: postgres
     environment:
-      POSTGRES_DB: mydatabase
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:

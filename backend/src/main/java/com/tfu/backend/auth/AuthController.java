@@ -15,6 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
@@ -112,6 +114,9 @@ public class AuthController {
 
       if (authHeader != null && authHeader.startsWith("Bearer ")) {
         authService.logout(authHeader);
+        // Clear security context
+        SecurityContextHolder.clearContext();
+
         return ResponseEntity.ok(ApiResponse.successMessage("Sesión cerrada correctamente"));
       }
 

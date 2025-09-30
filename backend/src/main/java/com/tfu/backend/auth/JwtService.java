@@ -1,5 +1,6 @@
 package com.tfu.backend.auth;
 
+import com.tfu.backend.config.JwtConfig;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
@@ -10,7 +11,6 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -28,15 +28,22 @@ import java.util.function.Function;
  */
 @Service
 public class JwtService {
-  /** Secreto para firmar el JWT (inyectado desde configuración) */
-  @Value("${spring.security.jwt.secret:dev-secret-please-change}")
-  private String secret;
+  /** Configuración de JWT */
+  private final JwtConfig jwtConfig;
 
-  /**
-   * Tiempo de expiración del token en segundos (inyectado desde configuración)
-   */
-  @Value("${spring.security.jwt.expiration:3600}")
-  private long expiration;
+  /** Secreto para firmar el JWT */
+  private final String secret;
+
+  /** Tiempo de expiración del token en segundos */
+  private final long expiration;
+
+  public JwtService(JwtConfig jwtConfig) {
+    this.jwtConfig = jwtConfig;
+    // Default values as fallback if config is not set
+    this.secret = jwtConfig.getSecret() != null ? jwtConfig.getSecret()
+        : "default_secret_key_for_development_only_do_not_use_in_production";
+    this.expiration = jwtConfig.getExpiration() > 0 ? jwtConfig.getExpiration() : 3600;
+  }
 
   /**
    * Almacena los tokens invalidados (ej: por cierre de sesión)
