@@ -26,3 +26,4 @@ EXPOSE 8080
 ENV SERVER_PORT=8080
 # Comando de entrada para ejecutar la app Spring Boot
 ENTRYPOINT ["java","-jar","/app/app.jar"]
+
