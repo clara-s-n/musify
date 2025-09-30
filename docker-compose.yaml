@@ -42,18 +42,36 @@ services:
       - app-net
 
   nginx:
-    image: nginx:alpine
+    build:
+      context: ./frontend/MusifyFront
+      target: runner
     container_name: nginx
     ports:
-      - "8080:80" # entrada pública: http://localhost:8080
-    volumes:
-      - ./ops/nginx.conf:/etc/nginx/nginx.conf:ro
+      - "8080:80"
     depends_on:
       - backend-app-1
       - backend-app-2
     restart: unless-stopped
     networks:
       - app-net
+
+  angular-frontend:
+    build:
+      context: ./frontend/MusifyFront
+      target: builder
+    container_name: frontend
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./frontend/MusifyFront:/app
+      - /app/node_modules
+    depends_on:
+      - backend-app-1
+    restart: unless-stopped
+    command: sh -c "npm start"
+    networks:
+      - app-net
+      
   postgres:
     image: postgres:latest
     container_name: postgres
