@@ -8,7 +8,7 @@ services:
     container_name: backend-app-1
     environment:
       SERVER_PORT: 8080
-      JWT_SECRET: ${JWT_SECRET:-super-secret-change-me}
+      JWT_SECRET: ${JWT_SECRET:-zSUp3R-l0ng_S3cuR3_K3y_F0r_JWT_T0k3n_S1gn1ng_W1th_M0r3_Th4n_256_B1ts_0f_3ntr0py_12345678901234567890}
     depends_on:
       - postgres
       - flaky-service
@@ -21,7 +21,7 @@ services:
     container_name: backend-app-2
     environment:
       SERVER_PORT: 8080
-      JWT_SECRET: ${JWT_SECRET:-super-secret-change-me}
+      JWT_SECRET: ${JWT_SECRET:-zSUp3R-l0ng_S3cuR3_K3y_F0r_JWT_T0k3n_S1gn1ng_W1th_M0r3_Th4n_256_B1ts_0f_3ntr0py_12345678901234567890}
       SPRING_MAIN_ALLOW-BEAN-DEFINITION-OVERRIDING: "true"
     depends_on:
       - postgres
@@ -66,6 +66,7 @@ services:
     volumes:
       - ./database/01-init.sql:/docker-entrypoint-initdb.d/1_init.sql
       - ./database/02-seed.sql:/docker-entrypoint-initdb.d/2_seed.sql
+      - ./database/03-auth-test-data.sql:/docker-entrypoint-initdb.d/3_auth_test_data.sql
     networks:
       - app-net
 

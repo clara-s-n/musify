@@ -100,6 +100,156 @@
 					"response": []
 				},
 				{
+					"name": "Login - Estudiante",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"estudiante@musify.com\",\n    \"password\": \"estudiante123\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Inicia sesión con un usuario estudiante"
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Profesor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"profesor@musify.com\",\n    \"password\": \"profesor456\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Inicia sesión con un usuario profesor"
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Usuario Premium",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"premium@musify.com\",\n    \"password\": \"premium789\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Inicia sesión con un usuario con rol premium"
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Soporte",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"soporte@musify.com\",\n    \"password\": \"soporte2023\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Inicia sesión con un usuario con rol de soporte"
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Desarrollador",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"dev@musify.com\",\n    \"password\": \"dev2023\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Inicia sesión con un usuario desarrollador"
+					},
+					"response": []
+				},
+				{
 					"name": "Logout",
 					"request": {
 						"auth": {
