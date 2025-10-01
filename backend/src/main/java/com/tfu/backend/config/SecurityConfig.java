@@ -67,6 +67,7 @@ public class SecurityConfig {
                 "/swagger-ui/**",
                 "/swagger-ui.html")
             .permitAll()
+            .requestMatchers("/music/spotify/**").permitAll() // Hacer públicos los endpoints de Spotify
             .anyRequest().authenticated())
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .userDetailsService(userDetailsService) // Usar directamente UserDetailsService
