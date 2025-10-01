@@ -6,6 +6,8 @@ services:
       context: ./backend
     image: tfu-backend:local
     container_name: backend-app-1
+    ports:
+      - "8443:8443"
     environment:
       SERVER_PORT: 8443
       JWT_SECRET: ${JWT_SECRET}
@@ -19,6 +21,9 @@ services:
       SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET}
       KEY_STORE_PASSWORD: ${KEY_STORE_PASSWORD:-mysecretpassword}
       KEY_PASSWORD: ${KEY_PASSWORD:-mysecretpassword}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
     depends_on:
       - postgres
       - flaky-service
@@ -43,6 +48,9 @@ services:
       SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET}
       KEY_STORE_PASSWORD: ${KEY_STORE_PASSWORD:-mysecretpassword}
       KEY_PASSWORD: ${KEY_PASSWORD:-mysecretpassword}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
     depends_on:
       - postgres
       - flaky-service
