@@ -13,6 +13,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -38,53 +39,116 @@ public class SpotifyService {
   @Scheduled(fixedRate = 3000000) // Refresh token every 50 minutes (token valid for 1 hour)
   public void fetchAccessToken() {
     if (System.currentTimeMillis() < tokenExpiration - 60000) {
+      System.out.println("Token still valid, skipping refresh");
       return; // Token still valid for more than a minute
     }
+    
+    System.out.println("Fetching new Spotify access token with client ID: " + clientId);
+    
+    try {
+      String authHeader = "Basic " + Base64.getEncoder()
+          .encodeToString((clientId + ":" + clientSecret).getBytes());
 
-    String authHeader = "Basic " + Base64.getEncoder()
-        .encodeToString((clientId + ":" + clientSecret).getBytes());
+      HttpHeaders headers = new HttpHeaders();
+      headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+      headers.set("Authorization", authHeader);
 
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-    headers.set("Authorization", authHeader);
+      MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+      body.add("grant_type", "client_credentials");
 
-    MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-    body.add("grant_type", "client_credentials");
+      HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
-    HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
+      ResponseEntity<SpotifyTokenResponse> response = restTemplate.exchange(
+          "https://accounts.spotify.com/api/token",
+          HttpMethod.POST,
+          request,
+          SpotifyTokenResponse.class);
 
-    ResponseEntity<SpotifyTokenResponse> response = restTemplate.exchange(
-        "https://accounts.spotify.com/api/token",
-        HttpMethod.POST,
-        request,
-        SpotifyTokenResponse.class);
-
-    if (response.getBody() != null) {
-      this.accessToken = response.getBody().getAccessToken();
-      this.tokenExpiration = System.currentTimeMillis() +
-          (response.getBody().getExpiresIn() * 1000);
+      if (response.getBody() != null) {
+        this.accessToken = response.getBody().getAccessToken();
+        this.tokenExpiration = System.currentTimeMillis() +
+            (response.getBody().getExpiresIn() * 1000);
+        System.out.println("Successfully obtained Spotify access token. Expires in: " + response.getBody().getExpiresIn() + " seconds");
+      } else {
+        System.err.println("Error: Spotify token response body is null");
+      }
+    } catch (Exception e) {
+      System.err.println("Error fetching Spotify token: " + e.getMessage());
+      e.printStackTrace();
     }
   }
 
   @Retry(name = "spotifyApi")
   @CircuitBreaker(name = "spotifyApi", fallbackMethod = "getRandomTracksFallback")
   public List<SpotifyTrackDto> getRandomTracks(int limit) {
-    HttpHeaders headers = getAuthHeaders();
-    HttpEntity<String> entity = new HttpEntity<>(headers);
+    System.out.println("Getting random tracks from Spotify, limit: " + limit);
+    
+    try {
+      HttpHeaders headers = getAuthHeaders();
+      HttpEntity<String> entity = new HttpEntity<>(headers);
+      
+      String url = "https://api.spotify.com/v1/browse/new-releases?limit=" + limit;
+      System.out.println("Making request to: " + url);
 
-    ResponseEntity<SpotifyNewReleasesResponse> response = restTemplate.exchange(
-        "https://api.spotify.com/v1/browse/new-releases?limit=" + limit,
-        HttpMethod.GET,
-        entity,
-        SpotifyNewReleasesResponse.class);
+      ResponseEntity<SpotifyNewReleasesResponse> response = restTemplate.exchange(
+          url,
+          HttpMethod.GET,
+          entity,
+          SpotifyNewReleasesResponse.class);
 
-    if (response.getBody() != null && response.getBody().getAlbums() != null) {
-      return response.getBody().getAlbums().getItems().stream()
-          .filter(album -> album.getTracks() != null)
-          .flatMap(album -> album.getTracks().getItems().stream())
-          .limit(limit)
-          .map(this::convertToDto)
-          .collect(Collectors.toList());
+      System.out.println("Response status: " + response.getStatusCode());
+      
+      if (response.getBody() != null) {
+        System.out.println("Response body received");
+        
+        if (response.getBody().getAlbums() != null) {
+          System.out.println("Albums found: " + response.getBody().getAlbums().getTotal());
+          
+          List<SpotifyTrackDto> tracks = new ArrayList<>();
+          
+          // Convert albums to DTOs
+          if (response.getBody().getAlbums().getItems() != null) {
+              for (SpotifyAlbum album : response.getBody().getAlbums().getItems()) {
+                  System.out.println("Processing album: " + album.getName());
+                  
+                  // Create a track DTO from album data (since the API doesn't actually return tracks)
+                  String artistNames = album.getArtists().stream()
+                      .map(SpotifyArtist::getName)
+                      .collect(Collectors.joining(", "));
+                      
+                  String imageUrl = null;
+                  if (album.getImages() != null && !album.getImages().isEmpty()) {
+                      imageUrl = album.getImages().get(0).getUrl();
+                  }
+                  
+                  SpotifyTrackDto trackDto = new SpotifyTrackDto(
+                      album.getId(), 
+                      album.getName(),
+                      artistNames,
+                      album.getName(), // Album name is same as track name for this simplification
+                      imageUrl,
+                      null // No preview URL available from this endpoint
+                  );
+                  
+                  tracks.add(trackDto);
+                  
+                  if (tracks.size() >= limit) {
+                      break;
+                  }
+              }
+          }
+              
+          System.out.println("Returning " + tracks.size() + " tracks");
+          return tracks;
+        } else {
+          System.out.println("No albums found in response");
+        }
+      } else {
+        System.out.println("Response body is null");
+      }
+    } catch (Exception e) {
+      System.err.println("Error getting random tracks: " + e.getMessage());
+      e.printStackTrace();
     }
 
     return Collections.emptyList();
@@ -103,6 +167,7 @@ public class SpotifyService {
         SpotifySearchResponse.class);
 
     if (response.getBody() != null && response.getBody().getTracks() != null) {
+      System.out.println("Search response received: " + response.getBody());
       return response.getBody().getTracks().getItems().stream()
           .map(this::convertToDto)
           .collect(Collectors.toList());

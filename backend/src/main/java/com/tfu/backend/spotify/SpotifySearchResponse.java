@@ -8,12 +8,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SpotifySearchResponse {
-    private TracksContainer tracks;
-    
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class TracksContainer {
-        private SpotifyPagingObject<SpotifyTrack> items;
-    }
+    private SpotifyPagingObject<SpotifyTrack> tracks;
 }

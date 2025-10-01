@@ -13,5 +13,6 @@ public class SpotifyAlbum {
     private String id;
     private String name;
     private List<SpotifyImage> images;
+    private List<SpotifyArtist> artists;
     private SpotifyPagingObject<SpotifyTrack> tracks;
 }

@@ -4,16 +4,24 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class SpotifyNewReleasesResponse {
-    private AlbumsContainer albums;
+    private SpotifyPagingObject albums;
     
     @Data
-    @AllArgsConstructor
     @NoArgsConstructor
-    public static class AlbumsContainer {
-        private SpotifyPagingObject<SpotifyAlbumWithTracks> items;
+    @AllArgsConstructor
+    public static class SpotifyPagingObject {
+        private String href;
+        private int limit;
+        private String next;
+        private int offset;
+        private String previous;
+        private int total;
+        private List<SpotifyAlbum> items;
     }
 }
