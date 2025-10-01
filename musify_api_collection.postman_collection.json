@@ -7,6 +7,75 @@
 	},
 	"item": [
 		{
+			"name": "Spotify",
+			"item": [
+				{
+					"name": "Obtener canciones aleatorias",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:8443/music/spotify/random?limit=10",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"music",
+								"spotify",
+								"random"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "Número de canciones a recuperar (máx: 50)"
+								}
+							]
+						},
+						"description": "Recupera una lista de canciones aleatorias basadas en nuevos lanzamientos de Spotify"
+					},
+					"response": []
+				},
+				{
+					"name": "Buscar canciones",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:8443/music/spotify/search?q=coldplay&limit=20",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"music",
+								"spotify",
+								"search"
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "coldplay",
+									"description": "Término de búsqueda"
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Número máximo de resultados (máx: 50)"
+								}
+							]
+						},
+						"description": "Busca canciones en Spotify por término de búsqueda"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints para integración con Spotify"
+		},
+		{
 			"name": "Autenticación",
 			"item": [
 				{
