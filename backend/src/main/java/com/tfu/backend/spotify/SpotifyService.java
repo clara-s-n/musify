@@ -223,4 +223,80 @@ public class SpotifyService {
         imageUrl,
         track.getPreviewUrl());
   }
+  
+  @Retry(name = "spotifyApi")
+  @CircuitBreaker(name = "spotifyApi", fallbackMethod = "getTrackPlaybackFallback")
+  public SpotifyPlaybackResponse getTrackPlayback(String trackId) {
+    System.out.println("Getting playback data for track: " + trackId);
+    
+    try {
+      HttpHeaders headers = getAuthHeaders();
+      HttpEntity<String> entity = new HttpEntity<>(headers);
+      
+      // Primero, obtenemos los datos completos de la canción
+      String url = "https://api.spotify.com/v1/tracks/" + trackId;
+      System.out.println("Making request to: " + url);
+      
+      ResponseEntity<SpotifyTrack> response = restTemplate.exchange(
+          url,
+          HttpMethod.GET,
+          entity,
+          SpotifyTrack.class);
+          
+      System.out.println("Response status: " + response.getStatusCode());
+      
+      if (response.getBody() != null) {
+        SpotifyTrack track = response.getBody();
+        
+        // Convertimos los datos a nuestra respuesta de reproducción
+        SpotifyPlaybackResponse playbackResponse = new SpotifyPlaybackResponse();
+        playbackResponse.setTrackId(track.getId());
+        playbackResponse.setName(track.getName());
+        
+        // Obtenemos los nombres de los artistas
+        if (track.getArtists() != null) {
+            String artistsString = track.getArtists().stream()
+                .map(SpotifyArtist::getName)
+                .collect(Collectors.joining(", "));
+            playbackResponse.setArtists(artistsString);
+        }
+        
+        // Información del álbum
+        if (track.getAlbum() != null) {
+            playbackResponse.setAlbum(track.getAlbum().getName());
+            
+            // Imagen del álbum
+            if (track.getAlbum().getImages() != null && !track.getAlbum().getImages().isEmpty()) {
+                playbackResponse.setImageUrl(track.getAlbum().getImages().get(0).getUrl());
+            }
+        }
+        
+        // URL de previsualización
+        playbackResponse.setPreviewUrl(track.getPreviewUrl());
+        
+        // Por defecto, usamos la URL de previsualización como URL de streaming
+        // En un caso real, aquí implementaríamos la lógica para generar una URL de streaming
+        // basada en acuerdos con Spotify o utilizando su SDK para Web Playback
+        playbackResponse.setStreamUrl(track.getPreviewUrl());
+        
+        // Indicamos si es reproducible (si tiene URL de previsualización)
+        playbackResponse.setIsPlayable(track.getPreviewUrl() != null);
+        
+        System.out.println("Playback data retrieved successfully for track: " + track.getName());
+        return playbackResponse;
+      }
+    } catch (Exception e) {
+      System.err.println("Error getting track playback data: " + e.getMessage());
+      e.printStackTrace();
+    }
+    
+    return null;
+  }
+  
+  // Fallback method for track playback
+  public SpotifyPlaybackResponse getTrackPlaybackFallback(String trackId, Throwable t) {
+    System.err.println("Fallback for track playback. Error: " + t.getMessage());
+    // Podríamos devolver datos en caché o una respuesta genérica
+    return null;
+  }
 }

@@ -95,6 +95,42 @@ Este endpoint permite buscar canciones en Spotify basadas en un término de bús
 }
 ```
 
+### 3. Reproducir Canción
+
+```
+GET /music/spotify/play/{trackId}
+```
+
+Este endpoint proporciona los datos necesarios para reproducir una canción específica por su ID de Spotify. Incluye información detallada sobre la canción y la URL para su reproducción.
+
+**Parámetros:**
+- `trackId` (obligatorio en la ruta): El ID único de Spotify para la canción
+
+**Respuesta:**
+```json
+{
+  "success": true,
+  "message": "Datos de reproducción obtenidos correctamente",
+  "data": {
+    "trackId": "1mea3bSkSGXuIRvnydlB5b",
+    "name": "Viva La Vida",
+    "artists": "Coldplay",
+    "album": "Viva La Vida or Death and All His Friends",
+    "imageUrl": "https://i.scdn.co/image/ab67616d0000b273e21cc1db05580b6f2d2a3b6e",
+    "previewUrl": "https://p.scdn.co/mp3-preview/c952a...",
+    "durationMs": 242373,
+    "isPlayable": true,
+    "streamUrl": "https://p.scdn.co/mp3-preview/c952a..."
+  },
+  "timestamp": "2025-10-01T17:45:30.028Z"
+}
+```
+
+**Notas sobre reproducción:**
+- `previewUrl` y `streamUrl` pueden contener la misma URL para la previsualización de 30 segundos que ofrece Spotify
+- `isPlayable` indica si la canción tiene URL de reproducción disponible
+- En caso de que la canción no esté disponible para reproducción, se devolverá un error 404
+
 ## Consumo desde el Frontend
 
 Para consumir estos endpoints desde el frontend Angular, puedes crear un servicio específico para la integración con Spotify.
@@ -112,6 +148,18 @@ export interface SpotifyTrack {
   album: string;
   imageUrl: string;
   previewUrl: string | null;
+}
+
+export interface SpotifyPlaybackData {
+  trackId: string;
+  name: string;
+  artists: string;
+  album: string;
+  imageUrl: string;
+  previewUrl: string | null;
+  durationMs: number | null;
+  isPlayable: boolean;
+  streamUrl: string | null;
 }
 ```
 
@@ -162,6 +210,16 @@ export class SpotifyService {
       `${this.apiUrl}/search?q=${encodeURIComponent(query)}&limit=${limit}`
     ).pipe(map(response => response.data));
   }
+  
+  /**
+   * Obtiene los datos de reproducción para una canción específica
+   * @param trackId ID único de Spotify de la canción
+   */
+  getTrackPlayback(trackId: string): Observable<SpotifyPlaybackData> {
+    return this.http.get<ApiResponse<SpotifyPlaybackData>>(
+      `${this.apiUrl}/play/${trackId}`
+    ).pipe(map(response => response.data));
+  }
 }
 ```
 
@@ -173,7 +231,7 @@ Ejemplo de uso en un componente:
 // src/app/components/music-explorer/music-explorer.component.ts
 import { Component, OnInit } from '@angular/core';
 import { SpotifyService } from '../../services/spotify.service';
-import { SpotifyTrack } from '../../models/spotify-track.model';
+import { SpotifyTrack, SpotifyPlaybackData } from '../../models/spotify-track.model';
 
 @Component({
   selector: 'app-music-explorer',
@@ -185,6 +243,8 @@ export class MusicExplorerComponent implements OnInit {
   searchResults: SpotifyTrack[] = [];
   searchQuery: string = '';
   loading: boolean = false;
+  currentPlayback: SpotifyPlaybackData | null = null;
+  isPlaying: boolean = false;
 
   constructor(private spotifyService: SpotifyService) { }
 
@@ -217,6 +277,28 @@ export class MusicExplorerComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error en búsqueda:', error);
+        this.loading = false;
+      }
+    });
+  }
+  
+  playTrack(trackId: string): void {
+    this.loading = true;
+    this.spotifyService.getTrackPlayback(trackId).subscribe({
+      next: (playbackData) => {
+        this.currentPlayback = playbackData;
+        this.isPlaying = true;
+        this.loading = false;
+        
+        if (playbackData.streamUrl) {
+          // Reproducir la canción usando audio API o biblioteca de terceros
+          const audioPlayer = document.getElementById('audioPlayer') as HTMLAudioElement;
+          audioPlayer.src = playbackData.streamUrl;
+          audioPlayer.play();
+        }
+      },
+      error: (error) => {
+        console.error('Error al obtener datos de reproducción:', error);
         this.loading = false;
       }
     });
@@ -254,8 +336,27 @@ Ejemplo de plantilla HTML:
           <h4>{{ track.name }}</h4>
           <p>{{ track.artists }}</p>
           <p class="album-name">{{ track.album }}</p>
-          <audio *ngIf="track.previewUrl" controls [src]="track.previewUrl"></audio>
+          <button class="play-button" (click)="playTrack(track.id)">
+            <i class="fa fa-play"></i> Reproducir
+          </button>
         </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Reproductor de música -->
+  <div *ngIf="currentPlayback" class="music-player">
+    <div class="player-content">
+      <div class="now-playing">
+        <img [src]="currentPlayback.imageUrl || 'assets/images/default-album.png'" alt="Portada">
+        <div class="track-details">
+          <h3>{{ currentPlayback.name }}</h3>
+          <p>{{ currentPlayback.artists }}</p>
+          <p>{{ currentPlayback.album }}</p>
+        </div>
+      </div>
+      <div class="player-controls">
+        <audio id="audioPlayer" controls [src]="currentPlayback.streamUrl || ''"></audio>
       </div>
     </div>
   </div>
@@ -399,6 +500,78 @@ audio {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Estilos para el reproductor de música */
+.music-player {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: #282828;
+  color: white;
+  padding: 15px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+.player-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.now-playing {
+  display: flex;
+  align-items: center;
+}
+
+.now-playing img {
+  width: 60px;
+  height: 60px;
+  margin-right: 15px;
+  object-fit: cover;
+}
+
+.track-details h3 {
+  margin: 0 0 5px;
+  font-size: 16px;
+}
+
+.track-details p {
+  margin: 0;
+  font-size: 14px;
+  color: #b3b3b3;
+}
+
+.player-controls {
+  flex-grow: 1;
+  max-width: 600px;
+  margin-left: 20px;
+}
+
+.player-controls audio {
+  width: 100%;
+}
+
+.play-button {
+  background-color: #1DB954;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  margin-top: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.play-button i {
+  margin-right: 5px;
 }
 ```
 

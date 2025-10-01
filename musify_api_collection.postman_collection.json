@@ -71,6 +71,29 @@
 						"description": "Busca canciones en Spotify por término de búsqueda"
 					},
 					"response": []
+				},
+				{
+					"name": "Reproducir canción",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:8443/music/spotify/play/1mea3bSkSGXuIRvnydlB5b",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"music",
+								"spotify",
+								"play",
+								"1mea3bSkSGXuIRvnydlB5b"
+							]
+						},
+						"description": "Obtiene los datos necesarios para reproducir una canción específica por su ID de Spotify"
+					},
+					"response": []
 				}
 			],
 			"description": "Endpoints para integración con Spotify"
