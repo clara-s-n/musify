@@ -78,6 +78,7 @@ public class SpotifyService {
 
     if (response.getBody() != null && response.getBody().getAlbums() != null) {
       return response.getBody().getAlbums().getItems().stream()
+          .filter(album -> album.getTracks() != null)
           .flatMap(album -> album.getTracks().getItems().stream())
           .limit(limit)
           .map(this::convertToDto)
@@ -130,12 +131,29 @@ public class SpotifyService {
   }
 
   private SpotifyTrackDto convertToDto(SpotifyTrack track) {
+    // Safe conversion with null checks
+    String artistsString = "";
+    if (track.getArtists() != null) {
+        artistsString = track.getArtists().stream()
+            .map(SpotifyArtist::getName)
+            .collect(Collectors.joining(", "));
+    }
+    
+    String albumName = "";
+    String imageUrl = null;
+    if (track.getAlbum() != null) {
+        albumName = track.getAlbum().getName();
+        if (track.getAlbum().getImages() != null && !track.getAlbum().getImages().isEmpty()) {
+            imageUrl = track.getAlbum().getImages().get(0).getUrl();
+        }
+    }
+    
     return new SpotifyTrackDto(
         track.getId(),
         track.getName(),
-        track.getArtists().stream().map(SpotifyArtist::getName).collect(Collectors.joining(", ")),
-        track.getAlbum().getName(),
-        track.getAlbum().getImages().isEmpty() ? null : track.getAlbum().getImages().get(0).getUrl(),
+        artistsString,
+        albumName,
+        imageUrl,
         track.getPreviewUrl());
   }
 }
