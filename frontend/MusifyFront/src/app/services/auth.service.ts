@@ -43,14 +43,41 @@ export class AuthService {
         tap(response => {
           console.log('Login response:', response);
 
-          // Extract the token from the response structure based on API format
-          // The backend returns { data: { accessToken: '...' }, status: '...', message: '...' }
-          const token = response.data?.accessToken;
+          // La estructura de respuesta del backend es:
+          // {
+          //   success: boolean,
+          //   message: string,
+          //   data: { accessToken: string },
+          //   timestamp: string,
+          //   error: string | null
+          // }
+
+          // Primero, verificamos si la respuesta fue exitosa
+          if (!response || response.error) {
+            console.error('Error en respuesta de login:', response);
+            throw new Error(response?.message || response?.error || 'Error de autenticación');
+          }
+
+          // Intentamos obtener el token de diferentes maneras para ser flexibles
+          let token = null;
+
+          if (response.data?.accessToken) {
+            // Estructura completa
+            token = response.data.accessToken;
+          } else if (response.accessToken) {
+            // En caso de que venga directamente en la respuesta
+            token = response.accessToken;
+          } else if (typeof response === 'string') {
+            // En caso de que devuelva directamente el token como string
+            token = response;
+          }
 
           if (!token) {
-            console.error('No token found in response', response);
-            throw new Error('Authentication failed: No token received');
+            console.error('No se encontró token en la respuesta', response);
+            throw new Error('Error de autenticación: No se recibió token');
           }
+
+          console.log('Token extraído correctamente');
 
           // Store token in sessionStorage (more secure than localStorage)
           sessionStorage.setItem(this.TOKEN_KEY, token);
@@ -58,7 +85,11 @@ export class AuthService {
           // Parse user info from JWT and update the user signal
           this.setUserFromToken(token);
         }),
-        map(response => response.data),
+        // Solo extraemos el contenido útil para el componente
+        map(response => {
+          if (response.data) return response.data;
+          return response; // Si no tiene estructura esperada, devolvemos todo
+        }),
         catchError(this.handleError),
         tap(() => this.loadingSubject.next(false))
       );
@@ -198,22 +229,47 @@ export class AuthService {
    * Handle HTTP errors from the API
    */
   private handleError(error: HttpErrorResponse): Observable<never> {
-    let errorMessage = 'An unknown error occurred';
+    console.error('Error en la solicitud HTTP:', error);
+
+    let errorMessage = 'Ocurrió un error desconocido';
 
     if (error.error instanceof ErrorEvent) {
-      // Client-side error
+      // Error del lado del cliente
       errorMessage = `Error: ${error.error.message}`;
+      console.error('Error del lado del cliente:', error.error.message);
     } else {
-      // Server-side error
+      // Error del lado del servidor
+      console.error(
+        `Código de error ${error.status}, ` +
+        `Cuerpo: ${JSON.stringify(error.error)}`
+      );
+
+      // Intentamos extraer el mensaje de error del formato específico de la API
+      if (error.error && typeof error.error === 'object') {
+        if (error.error.message) {
+          errorMessage = error.error.message;
+        } else if (error.error.error) {
+          errorMessage = error.error.error;
+        } else if (error.error.data && error.error.data.message) {
+          errorMessage = error.error.data.message;
+        }
+      }
+
+      // Mensajes específicos según el código de estado
       if (error.status === 401) {
-        errorMessage = 'Invalid email or password';
-      } else if (error.error && error.error.message) {
-        errorMessage = error.error.message;
-      } else {
-        errorMessage = `Error Code: ${error.status}, Message: ${error.message}`;
+        errorMessage = 'Email o contraseña inválidos';
+      } else if (error.status === 403) {
+        errorMessage = 'No tiene permisos para acceder a este recurso';
+      } else if (error.status === 404) {
+        errorMessage = 'El recurso solicitado no existe';
+      } else if (error.status === 0) {
+        errorMessage = 'No se puede conectar con el servidor. Compruebe su conexión a Internet.';
+      } else if (error.status >= 500) {
+        errorMessage = 'Error en el servidor. Inténtelo de nuevo más tarde.';
       }
     }
 
+    this.loadingSubject.next(false);
     return throwError(() => new Error(errorMessage));
   }
 }

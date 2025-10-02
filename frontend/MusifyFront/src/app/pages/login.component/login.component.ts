@@ -88,19 +88,28 @@ export class LoginComponent implements OnInit {
     this.successMessage.set('');
 
     if (this.loginForm.invalid) {
-      this.errorMessage.set('Please enter valid email and password');
+      this.errorMessage.set('Por favor ingresa un email y contraseña válidos');
       return;
     }
 
     const { email, password } = this.loginForm.value;
 
+    console.log('Intentando login con email:', email);
+
     this.authService.login(email, password).subscribe({
-      next: () => {
-        this.successMessage.set('Login successful');
+      next: (response) => {
+        console.log('Login exitoso:', response);
+        this.successMessage.set('Inicio de sesión exitoso');
+
+        // Actualizamos el estado de autenticación
+        this.updateAuthStatus();
+
+        // Redirigir al usuario a la página solicitada o al home
         this.router.navigateByUrl(this.returnUrl);
       },
       error: (error) => {
-        this.errorMessage.set(error.message || 'Login failed');
+        console.error('Error en login:', error);
+        this.errorMessage.set(error.message || 'Error al iniciar sesión');
       }
     });
   }
