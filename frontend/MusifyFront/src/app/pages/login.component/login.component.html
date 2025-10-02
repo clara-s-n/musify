@@ -1,21 +1,126 @@
 <div class="container" #container>
+  <!-- Registration Form -->
   <div class="form-container sign-up-container">
-    <form>
+    <form [formGroup]="registerForm" (ngSubmit)="onRegister()">
       <h1>Crear cuenta</h1>
-      <input type="text" placeholder="Name" />
-      <input type="email" placeholder="Email" />
-      <input type="password" placeholder="Password" />
-      <button>Crear cuenta</button>
+
+      <!-- Error Message -->
+      <div *ngIf="errorMessage()" class="alert alert-danger">
+        {{ errorMessage() }}
+      </div>
+
+      <!-- Success Message -->
+      <div *ngIf="successMessage()" class="alert alert-success">
+        {{ successMessage() }}
+      </div>
+
+      <!-- Username Field -->
+      <div class="form-group">
+        <input type="text" formControlName="username" placeholder="Nombre"
+          [class.is-invalid]="registerForm.get('username')?.invalid && registerForm.get('username')?.touched" />
+        <div *ngIf="registerForm.get('username')?.invalid && registerForm.get('username')?.touched"
+          class="invalid-feedback">
+          <div *ngIf="registerForm.get('username')?.errors?.['required']">Username is required</div>
+        </div>
+      </div>
+
+      <!-- Email Field -->
+      <div class="form-group">
+        <input type="email" formControlName="email" placeholder="Email"
+          [class.is-invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched" />
+        <div *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched" class="invalid-feedback">
+          <div *ngIf="registerForm.get('email')?.errors?.['required']">Email is required</div>
+          <div *ngIf="registerForm.get('email')?.errors?.['email']">Please enter a valid email</div>
+        </div>
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-group">
+        <input type="password" formControlName="password" placeholder="Password"
+          [class.is-invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched" />
+        <div *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
+          class="invalid-feedback">
+          <div *ngIf="registerForm.get('password')?.errors?.['required']">Password is required</div>
+          <div *ngIf="registerForm.get('password')?.errors?.['minlength']">Password must be at least 6 characters</div>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" [disabled]="registerForm.invalid || loading()">
+        <span *ngIf="!loading()">Crear cuenta</span>
+        <span *ngIf="loading()" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+      </button>
     </form>
   </div>
+
+  <!-- Login Form -->
   <div class="form-container sign-in-container">
-    <form>
+    <!-- Show login form if not logged in -->
+    <form *ngIf="!isLoggedIn()" [formGroup]="loginForm" (ngSubmit)="onLogin()">
       <h1>Iniciar Sesión</h1>
-      <input type="email" placeholder="Email" />
-      <input type="password" placeholder="Password" />
-      <button>Iniciar Sesión</button>
+      
+      <!-- Error Message -->
+      <div *ngIf="errorMessage()" class="alert alert-danger">
+        {{ errorMessage() }}
+      </div>
+      
+      <!-- Success Message -->
+      <div *ngIf="successMessage()" class="alert alert-success">
+        {{ successMessage() }}
+      </div>      <!-- Email Field -->
+      <div class="form-group">
+        <input type="email" formControlName="email" placeholder="Email"
+          [class.is-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" />
+        <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" class="invalid-feedback">
+          <div *ngIf="loginForm.get('email')?.errors?.['required']">Email is required</div>
+          <div *ngIf="loginForm.get('email')?.errors?.['email']">Please enter a valid email</div>
+        </div>
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-group">
+        <input type="password" formControlName="password" placeholder="Password"
+          [class.is-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" />
+        <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="invalid-feedback">
+          <div *ngIf="loginForm.get('password')?.errors?.['required']">Password is required</div>
+          <div *ngIf="loginForm.get('password')?.errors?.['minlength']">Password must be at least 6 characters</div>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" [disabled]="loginForm.invalid || loading()">
+        <span *ngIf="!loading()">Iniciar Sesión</span>
+        <span *ngIf="loading()" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+      </button>
     </form>
+    
+    <!-- Show logged-in info if logged in -->
+    <div *ngIf="isLoggedIn()" class="user-info">
+      <h2>Sesión Iniciada</h2>
+      
+      <!-- Error Message -->
+      <div *ngIf="errorMessage()" class="alert alert-danger">
+        {{ errorMessage() }}
+      </div>
+      
+      <!-- Success Message -->
+      <div *ngIf="successMessage()" class="alert alert-success">
+        {{ successMessage() }}
+      </div>
+      
+      <div class="user-details" *ngIf="currentUser()">
+        <p><strong>Usuario:</strong> {{ currentUser()?.username || currentUser()?.email }}</p>
+        <p><strong>Email:</strong> {{ currentUser()?.email }}</p>
+      </div>
+      
+      <button (click)="onLogout()" class="logout-btn">
+        <span *ngIf="!loading()">Cerrar Sesión</span>
+        <span *ngIf="loading()" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+      </button>
+    </div>
   </div>
+
+  <!-- Overlay Panel -->
   <div class="overlay-container">
     <div class="overlay">
       <div class="overlay-panel overlay-left">
@@ -25,7 +130,7 @@
       </div>
       <div class="overlay-panel overlay-right">
         <h1>Registrese</h1>
-        <p>Si no tiene una cuenta active, considere unirse a nuestra web.</p>
+        <p>Si no tiene una cuenta activa, considere unirse a nuestra web.</p>
         <button class="ghost" id="signUp" (click)="singUpClick()">Registrar</button>
       </div>
     </div>
