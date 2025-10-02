@@ -1,0 +1,33 @@
+<div class="container" #container>
+	<div class="form-container sign-up-container">
+		<form>
+			<h1>Crear cuenta</h1>
+			<input type="text" placeholder="Name" />
+			<input type="email" placeholder="Email" />
+			<input type="password" placeholder="Password" />
+			<button>Sign Up</button>
+		</form>
+	</div>
+	<div class="form-container sign-in-container">
+		<form>
+			<h1>Sign in</h1>
+			<input type="email" placeholder="Email" />
+			<input type="password" placeholder="Password" />
+			<button>Iniciar Sesión</button>
+		</form>
+	</div>
+	<div class="overlay-container">
+		<div class="overlay">
+			<div class="overlay-panel overlay-left">
+				<h1>Bienvenido</h1>
+				<p>Si ya tiene una cuenta activa, inicie sesión.</p>
+				<button class="ghost" id="signIn" (click)="singInClick()">Iniciar Sesión</button>
+			</div>
+			<div class="overlay-panel overlay-right">
+				<h1>Registrese</h1>
+				<p>Si no tiene una cuenta active, considere unirse a nuestra web.</p>
+				<button class="ghost" id="signUp" (click)="singUpClick()">Registrar</button>
+			</div>
+		</div>
+	</div>
+</div>
