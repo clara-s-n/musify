@@ -1,21 +1,58 @@
 ## Puerto en el que se ejecuta el servidor Spring Boot
 server:
-  port: ${SERVER_PORT:8080}
+  port: 8443
+  ssl:
+    key-store: classpath:musify.p12
+    key-store-password: ${KEY_STORE_PASSWORD:mysecretpassword}
+    key-store-type: PKCS12
+    key-alias: musify
+    key-password: ${KEY_PASSWORD:mysecretpassword}
 
 ## Nivel de log para la seguridad de Spring
 logging.level.org.springframework.security: WARN
 
-## Configuración de la base de datos
+## Configuración de OpenAPI
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+    disable-swagger-default-url: true
+  show-actuator: true
+  paths-to-match: /**
+
+## Configuración general de Spring Boot
 spring:
+  ## Control de reinicios automáticos con DevTools
+  devtools:
+    restart:
+      enabled: ${DEVTOOLS_RESTART:false}
+      poll-interval: 2s
+      quiet-period: 1s
+      additional-exclude: static/**,public/**
+  ## Configuración de la base de datos
   datasource:
-    url: jdbc:postgresql://postgres:5432/mydatabase
-    username: myuser
-    password: secret
+    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${POSTGRES_DB:mydatabase}
+    username: ${POSTGRES_USER:myuser}
+    password: ${POSTGRES_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  ## Configuración de seguridad y JWT
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${JWK_URI:none}
 
 ## Configuración de endpoints de monitoreo y métricas
 management:
@@ -23,11 +60,6 @@ management:
     web:
       exposure:
         include: health,info,metrics
-
-## Configuración del JWT para autenticación
-jwt:
-  secret: ${JWT_SECRET:dev-secret-please-change} # Secreto para firmar los tokens JWT
-  expiration: 3600 # Tiempo de expiración del token en segundos
 
 ## Configuración de Resilience4j para tolerancia a fallos
 resilience4j:
@@ -37,19 +69,46 @@ resilience4j:
         slidingWindowSize: 10 # Tamaño de la ventana para el cálculo de fallos
         failureRateThreshold: 50 # Porcentaje de fallos para abrir el circuito
         waitDurationInOpenState: 10s # Tiempo de espera antes de reintentar
+      spotifyApi:
+        slidingWindowSize: 10 # Tamaño de la ventana para el cálculo de fallos
+        failureRateThreshold: 50 # Porcentaje de fallos para abrir el circuito
+        waitDurationInOpenState: 30s # Tiempo de espera antes de reintentar para Spotify
   retry:
     instances:
       streamSource:
         maxAttempts: 3 # Número máximo de reintentos
         waitDuration: 200ms # Espera entre reintentos
         enableExponentialBackoff: true # Habilita backoff exponencial
+      spotifyApi:
+        maxAttempts: 3 # Número máximo de reintentos
+        waitDuration: 500ms # Espera entre reintentos para Spotify
+        enableExponentialBackoff: true # Habilita backoff exponencial
   timelimiter:
     instances:
       streamSource:
         timeoutDuration: 2s # Tiempo máximo de espera para la operación
+      spotifyApi:
+        timeoutDuration: 5s # Tiempo máximo de espera para operaciones de Spotify
   ratelimiter:
     instances:
       loginLimiter:
         limitForPeriod: 5 # Límite de intentos por periodo
         limitRefreshPeriod: 1m # Duración del periodo
         timeoutDuration: 0 # Tiempo de espera para obtener permiso
+      spotifyApiLimiter:
+        limitForPeriod: 20 # Límite de llamadas a API de Spotify por periodo
+        limitRefreshPeriod: 10s # Duración del periodo para Spotify
+        timeoutDuration: 0 # Tiempo de espera para obtener permiso
+
+# JWT Configuration
+app:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:default_secret_key_for_development_only}
+      expiration: ${JWT_EXPIRATION:3600}
+
+# Spotify API Configuration
+spotify:
+  client:
+    id: ${SPOTIFY_CLIENT_ID}
+    secret: ${SPOTIFY_CLIENT_SECRET}

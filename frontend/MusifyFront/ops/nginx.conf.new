@@ -1,0 +1,64 @@
+# Configuración NGINX actualizada para resolver problemas de conexión
+events {}
+
+http {
+  # Configuración para tipos MIME
+  include       /etc/nginx/mime.types;
+  default_type  application/octet-stream;
+
+  # Upstream con 2 réplicas (round-robin)
+  upstream app_backend {
+    server backend-app-1:8080 max_fails=3 fail_timeout=10s;
+    server backend-app-2:8080 max_fails=3 fail_timeout=10s backup;
+    keepalive 32;
+  }
+
+  server {
+    listen 80;
+
+    # Configuración para reintentos
+    proxy_next_upstream error timeout http_500 http_502 http_503 http_504;
+    proxy_next_upstream_tries 3;
+    
+    # Configuración específica para Swagger UI y API docs
+    location ~* /(swagger-ui|api-docs|v3/api-docs) {
+      proxy_pass http://app_backend;
+      proxy_http_version 1.1;
+      proxy_set_header Connection "";
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      
+      # Ajustar timeouts para documentación
+      proxy_connect_timeout 20s;
+      proxy_send_timeout    20s;
+      proxy_read_timeout    60s;
+      
+      # Permitir CORS para Swagger UI
+      add_header 'Access-Control-Allow-Origin' '*';
+      add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
+      add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
+    }
+
+    # Configuración para todos los demás endpoints
+    location / {
+      proxy_pass http://app_backend;
+      proxy_http_version 1.1;
+      proxy_set_header Connection "";
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+
+      # Timeouts estándar
+      proxy_connect_timeout 10s;
+      proxy_send_timeout    10s;
+      proxy_read_timeout    10s;
+    }
+
+    # Compresión para mejorar rendimiento
+    gzip on;
+    gzip_types application/json application/javascript text/plain text/css;
+  }
+}
