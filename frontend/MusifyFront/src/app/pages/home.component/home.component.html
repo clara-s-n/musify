@@ -1,0 +1,18 @@
+<body>
+  <div class="header-top">
+    <app-logo></app-logo>
+    <search-bar></search-bar>
+  </div>
+
+  <div class="row">
+    @for (tracks of randomSongs; track tracks.id) {
+    <mat-card class="music-card">
+      <img mat-card-image src="{{ tracks.imageUrl }}" (click)="playTrack(tracks.id)" />
+      <mat-card-content>
+        <b>{{ tracks.name }}</b>
+        <p>Canción - {{ tracks.artists }}</p>
+      </mat-card-content>
+    </mat-card>
+    }
+  </div>
+</body>
