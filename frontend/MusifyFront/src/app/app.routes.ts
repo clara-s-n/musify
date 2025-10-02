@@ -15,4 +15,11 @@ export const routes: Routes = [
     },
     pathMatch: 'full',
   },
+  {
+    path: 'result',
+    loadComponent() {
+      return import('./pages/results.component/results.component').then((m) => m.ResultsComponent);
+    },
+    pathMatch: 'full',
+  },
 ];

@@ -2,9 +2,15 @@
   rel="stylesheet"
   href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=search"
 />
-<form>
+<form (ngSubmit)="searchSong()">
   <div class="search">
     <span class="material-symbols-outlined"> search </span>
-    <input class="search-input" type="search" placeholder="Buscar" />
+    <input
+      class="search-input"
+      type="search"
+      placeholder="Buscar"
+      [(ngModel)]="searchQuery"
+      name="searchQuery"
+    />
   </div>
 </form>
