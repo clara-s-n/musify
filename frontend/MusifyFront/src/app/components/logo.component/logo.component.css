@@ -6,4 +6,11 @@
   width: 70px;
   height: 70px;
   z-index: 10;
+  opacity: 1;
+  transition: 0.6s;
+  cursor: pointer;
+}
+
+.logo:hover {
+  opacity: 0.5;
 }

@@ -13,13 +13,11 @@ export const routes: Routes = [
     loadComponent() {
       return import('./pages/login.component/login.component').then((m) => m.LoginComponent);
     },
-    pathMatch: 'full',
   },
   {
     path: 'result',
     loadComponent() {
       return import('./pages/results.component/results.component').then((m) => m.ResultsComponent);
     },
-    pathMatch: 'full',
   },
 ];

@@ -5,6 +5,7 @@ import { SpotifyService } from '../../services/spotify.service';
 import { SpotifyPlaybackData, SpotifyTrack } from '../../models/spotify-track-model';
 import { MatCardModule } from '@angular/material/card';
 import { LogoComponent } from '../../components/logo.component/logo.component';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-home',
@@ -14,9 +15,11 @@ import { LogoComponent } from '../../components/logo.component/logo.component';
 })
 export class HomeComponent implements OnInit {
   private spotifyService = inject(SpotifyService);
+  private router = inject(Router);
   randomSongs: SpotifyTrack[] | null = null;
   currentPlayback: SpotifyPlaybackData | null = null;
   isPlaying: boolean = false;
+  searchedSongs: SpotifyTrack[] | null = null;
 
   ngOnInit(): void {
     this.spotifyService.getRandomTracks(12).subscribe((tracks) => (this.randomSongs = tracks));
@@ -36,6 +39,12 @@ export class HomeComponent implements OnInit {
       error: (error) => {
         console.error('Error al obtener datos de reproducción:', error);
       },
+    });
+  }
+  searchHome(tracks: SpotifyTrack[]) {
+    this.searchedSongs = tracks;
+    this.router.navigate(['/result'], {
+      state: { searchResultsHome: this.searchedSongs },
     });
   }
 }
