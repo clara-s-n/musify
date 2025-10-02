@@ -58,16 +58,16 @@
     <!-- Show login form if not logged in -->
     <form *ngIf="!isLoggedIn()" [formGroup]="loginForm" (ngSubmit)="onLogin()">
       <h1>Iniciar Sesión</h1>
-      
+
       <!-- Error Message -->
       <div *ngIf="errorMessage()" class="alert alert-danger">
         {{ errorMessage() }}
       </div>
-      
+
       <!-- Success Message -->
       <div *ngIf="successMessage()" class="alert alert-success">
         {{ successMessage() }}
-      </div>      <!-- Email Field -->
+      </div> <!-- Email Field -->
       <div class="form-group">
         <input type="email" formControlName="email" placeholder="Email"
           [class.is-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" />
@@ -93,26 +93,26 @@
         <span *ngIf="loading()" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
       </button>
     </form>
-    
+
     <!-- Show logged-in info if logged in -->
     <div *ngIf="isLoggedIn()" class="user-info">
       <h2>Sesión Iniciada</h2>
-      
+
       <!-- Error Message -->
       <div *ngIf="errorMessage()" class="alert alert-danger">
         {{ errorMessage() }}
       </div>
-      
+
       <!-- Success Message -->
       <div *ngIf="successMessage()" class="alert alert-success">
         {{ successMessage() }}
       </div>
-      
+
       <div class="user-details" *ngIf="currentUser()">
         <p><strong>Usuario:</strong> {{ currentUser()?.username || currentUser()?.email }}</p>
         <p><strong>Email:</strong> {{ currentUser()?.email }}</p>
       </div>
-      
+
       <button (click)="onLogout()" class="logout-btn">
         <span *ngIf="!loading()">Cerrar Sesión</span>
         <span *ngIf="loading()" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>

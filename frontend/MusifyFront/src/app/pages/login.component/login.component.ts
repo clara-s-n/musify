@@ -49,18 +49,18 @@ export class LoginComponent implements OnInit {
     // Check authentication status
     this.updateAuthStatus();
   }
-  
+
   /**
    * Update the component's authentication status based on the AuthService
    */
   updateAuthStatus(): void {
     const isAuth = this.authService.isAuthenticated();
     this.isLoggedIn.set(isAuth);
-    
+
     if (isAuth) {
       // Get current user info
       this.currentUser.set(this.authService.getCurrentUser()());
-      
+
       // If we're on the login page and already authenticated, redirect to home
       if (this.router.url === '/login') {
         this.router.navigateByUrl(this.returnUrl);
@@ -110,7 +110,7 @@ export class LoginComponent implements OnInit {
     // For now, just show a message that registration is not available
     this.errorMessage.set('Registration is not available yet');
   }
-  
+
   /**
    * Handle user logout
    */
@@ -118,17 +118,17 @@ export class LoginComponent implements OnInit {
     // Reset messages
     this.errorMessage.set('');
     this.successMessage.set('');
-    
+
     try {
       // Call logout in AuthService
       this.authService.logout();
-      
+
       // Update component state
       this.updateAuthStatus();
-      
+
       // Show success message
       this.successMessage.set('Logged out successfully');
-      
+
       // Redirect to login page
       this.router.navigateByUrl('/login');
     } catch (error) {
