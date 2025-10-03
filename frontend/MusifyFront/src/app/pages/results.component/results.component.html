@@ -1,0 +1,25 @@
+<body>
+  <div class="header-top">
+    <app-logo></app-logo>
+    <search-bar (searchResults)="onSearchResults($event)"></search-bar>
+  </div>
+  <div class="cards-container">
+    @for (results of searchResults; track results.id) {
+    <div class="music-card">
+      <div class="mat-card-header">
+        <div class="mat-card-title-group">
+          <div>
+            <div class="mat-card-title">
+              <b>{{ results.name }}</b>
+            </div>
+            <div class="mat-card-subtitle">
+              <p>{{ results.artists }}</p>
+            </div>
+          </div>
+          <img mat-card-sm-image src="{{ results.imageUrl }}" />
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+</body>

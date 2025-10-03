@@ -1,0 +1,20 @@
+.search {
+  width: max-content;
+  align-items: center;
+  display: flex;
+  padding: 14px;
+  border-radius: 28px;
+  background: #f6f6f6;
+  z-index: 20;
+  margin-left: 20px;
+}
+
+.search-input {
+  font-size: 16px;
+  font-family: 'SF Pro Display Font Family', sans-serif;
+  color: #333;
+  margin-left: 14px;
+  border: none;
+  outline: none;
+  background: transparent;
+}

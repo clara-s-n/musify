@@ -6,9 +6,24 @@ services:
       context: ./backend
     image: tfu-backend:local
     container_name: backend-app-1
+    ports:
+      - "8443:8443"
     environment:
-      SERVER_PORT: 8080
-      JWT_SECRET: ${JWT_SECRET:-super-secret-change-me}
+      SERVER_PORT: 8443
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-3600}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID}
+      SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET}
+      KEY_STORE_PASSWORD: ${KEY_STORE_PASSWORD:-mysecretpassword}
+      KEY_PASSWORD: ${KEY_PASSWORD:-mysecretpassword}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
     depends_on:
       - postgres
       - flaky-service
@@ -20,8 +35,22 @@ services:
     image: tfu-backend:local # reutiliza la imagen construida por backend-app-1
     container_name: backend-app-2
     environment:
-      SERVER_PORT: 8080
-      JWT_SECRET: ${JWT_SECRET:-super-secret-change-me}
+      SERVER_PORT: 8443
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-3600}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      SPRING_MAIN_ALLOW-BEAN-DEFINITION-OVERRIDING: "true"
+      SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID}
+      SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET}
+      KEY_STORE_PASSWORD: ${KEY_STORE_PASSWORD:-mysecretpassword}
+      KEY_PASSWORD: ${KEY_PASSWORD:-mysecretpassword}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
     depends_on:
       - postgres
       - flaky-service
@@ -41,30 +70,49 @@ services:
       - app-net
 
   nginx:
-    image: nginx:alpine
+    build:
+      context: ./frontend/MusifyFront
+      target: runner
     container_name: nginx
     ports:
-      - "8080:80" # entrada pública: http://localhost:8080
-    volumes:
-      - ./ops/nginx.conf:/etc/nginx/nginx.conf:ro
+      - "8080:80"
     depends_on:
       - backend-app-1
       - backend-app-2
     restart: unless-stopped
     networks:
       - app-net
+
+  angular-frontend:
+    build:
+      context: ./frontend/MusifyFront
+      target: builder
+    container_name: frontend
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./frontend/MusifyFront:/app
+      - /app/node_modules
+    depends_on:
+      - backend-app-1
+    restart: unless-stopped
+    command: sh -c "npm start"
+    networks:
+      - app-net
+
   postgres:
     image: postgres:latest
     container_name: postgres
     environment:
-      POSTGRES_DB: mydatabase
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - ./database/01-init.sql:/docker-entrypoint-initdb.d/1_init.sql
       - ./database/02-seed.sql:/docker-entrypoint-initdb.d/2_seed.sql
+      - ./database/03-auth-test-data.sql:/docker-entrypoint-initdb.d/3_auth_test_data.sql
     networks:
       - app-net
 

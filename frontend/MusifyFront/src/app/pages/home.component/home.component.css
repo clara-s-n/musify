@@ -1,0 +1,59 @@
+* {
+  box-sizing: border-box;
+  font-family: 'SF Pro Display Font Family', sans-serif;
+}
+
+body {
+  background-image: url('/assets/images/background.png');
+  background-size: cover;
+}
+
+.music-card {
+  max-width: 20rem;
+  display: flex;
+  padding: 30px;
+  color: white;
+  background-color: white;
+  background-color: transparent !important;
+  box-shadow: none;
+}
+
+.music-card img {
+  width: 200px;
+  height: 200px;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-left: 1rem;
+  margin-bottom: 20px;
+  opacity: 1;
+  transition: 0.6s;
+}
+
+.music-card img:hover {
+  opacity: 0.5;
+}
+.music-card b {
+  font-size: 1.3em;
+  margin-bottom: 5px;
+}
+
+.music-card p {
+  font-size: 1em;
+  color: #bbb;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  padding-top: 120px;
+  padding-left: 75px;
+}
+.header-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  z-index: 20;
+  padding: 10px;
+}
