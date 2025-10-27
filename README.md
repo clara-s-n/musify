@@ -28,7 +28,35 @@ Este proyecto implementa la combinación: **"Replicación y re-intentos para dis
   - Método de fallback para degradación elegante
 - **Beneficio**: Tolerancia a fallos transitorios y protección contra cascadas de fallos.
 
-### 2. Tácticas para Seguridad (Resistir Ataques)
+#### Health Endpoint Monitoring
+
+- **Implementación**: Spring Boot Actuator para monitoreo de salud.
+- **Componentes clave**:
+  - Endpoint `/actuator/health` expuesto públicamente
+  - Métricas y estado del sistema
+- **Beneficio**: Visibilidad del estado del sistema y detección temprana de problemas.
+
+### 2. Tácticas para Rendimiento
+
+#### Cache-Aside
+
+- **Implementación**: Spring Cache para cachear resultados de búsqueda de Spotify.
+- **Componentes clave**:
+  - `@Cacheable` en métodos de búsqueda de `SpotifyService`
+  - `@CacheEvict` programado para refrescar caché cada 10 minutos
+  - Configuración de caché en `application.yaml`
+- **Beneficio**: Reducción de llamadas a APIs externas y mejora de tiempos de respuesta.
+
+#### Asynchronous Request-Reply
+
+- **Implementación**: Procesamiento asíncrono de operaciones de playback.
+- **Componentes clave**:
+  - `CompletableFuture<>` en `PlaybackController`
+  - `ThreadPoolTaskExecutor` configurado en `AsyncConfig`
+  - `@EnableAsync` para habilitar operaciones asíncronas
+- **Beneficio**: Mejor utilización de recursos y capacidad de manejar múltiples peticiones concurrentemente.
+
+### 3. Tácticas para Seguridad (Resistir Ataques)
 
 #### Validación de Entrada
 
@@ -45,6 +73,43 @@ Este proyecto implementa la combinación: **"Replicación y re-intentos para dis
   - `@RateLimiter` de Resilience4j
   - Configuración de límites por periodo de tiempo
 - **Beneficio**: Protección contra ataques de fuerza bruta y denegación de servicio.
+
+#### Gatekeeper y Gateway Offloading
+
+- **Implementación**: NGINX como gateway que offloads funcionalidades.
+- **Componentes clave**:
+  - NGINX como reverse proxy y load balancer
+  - Manejo de TLS/SSL en el gateway
+  - Reintentos automáticos (`proxy_next_upstream`)
+  - Health checks pasivos
+- **Beneficio**: Separación de responsabilidades, protección del backend, y mejora de seguridad.
+
+#### Federated Identity (parcial)
+
+- **Implementación**: JWT-based authentication y OAuth2 con Spotify.
+- **Componentes clave**:
+  - `JwtTokenProvider` para generación y validación de tokens
+  - Integración OAuth2 con Spotify API (client credentials flow)
+- **Beneficio**: Autenticación distribuida y integración con proveedores externos.
+
+### 4. Tácticas de Facilidad de Modificación y Despliegue
+
+#### External Configuration Store
+
+- **Implementación**: Externalización de configuración mediante variables de entorno.
+- **Componentes clave**:
+  - Variables de entorno en `docker-compose.yaml`
+  - Archivo `.env` para configuración local
+  - `application.yaml` con placeholders `${VAR:default}`
+- **Beneficio**: Configuración sin recompilación y despliegue en múltiples ambientes.
+
+#### Blue/Green Deployment (simulado)
+
+- **Implementación**: Dos réplicas del backend permiten actualizaciones sin downtime.
+- **Componentes clave**:
+  - `backend-app-1` y `backend-app-2` en Docker Compose
+  - NGINX load balancer con health checks
+- **Beneficio**: Despliegues sin downtime mediante actualización secuencial de réplicas.
 
 ## Estructura del Proyecto
 
@@ -123,7 +188,15 @@ Este script muestra cómo el sistema maneja los fallos del servicio de streaming
 
 Este script demuestra la validación de entrada (rechazando emails inválidos) y el rate limiting (permitiendo solo 5 intentos de login por minuto).
 
-### 4. Estado de Salud
+### 4. Rendimiento: Cache y Async
+
+```bash
+./scripts/demo_performance.sh
+```
+
+Este script demuestra los patrones de rendimiento implementados: Cache-Aside (búsquedas más rápidas con caché) y Asynchronous Request-Reply (procesamiento concurrente de operaciones).
+
+### 5. Estado de Salud
 
 ```bash
 ./scripts/demo_health.sh

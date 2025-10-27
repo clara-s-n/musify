@@ -50,6 +50,12 @@
       <version>${resilience4j.version}</version>
     </dependency>
 
+    <!-- Spring Cache (Cache-Aside pattern) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-cache</artifactId>
+    </dependency>
+
     <!-- JWT para login/refresh -->
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
