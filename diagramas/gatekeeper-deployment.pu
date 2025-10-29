@@ -1,0 +1,92 @@
+@startuml gatekeeper-deployment
+!theme plain
+title Patrón Gatekeeper - Diagrama de Despliegue
+
+cloud "Internet" {
+  actor "Cliente\nExterno" as Client
+}
+
+node "<<Docker Host>>" as DockerHost {
+  
+  node "<<Container>> NGINX\n(Gateway/Gatekeeper)" as NGINX {
+    artifact "nginx.conf" as conf
+    port "80 (HTTP)" as port80
+  }
+  
+  node "<<Internal Network>>\napp-net (bridge)" as Network {
+    
+    node "<<Container>>\nbackend-app-1" as Backend1 {
+      artifact "musify.jar" as jar1
+      port "8443 (HTTPS)" as port8443_1
+    }
+    
+    node "<<Container>>\nbackend-app-2" as Backend2 {
+      artifact "musify.jar" as jar2
+      port "8443 (HTTPS)" as port8443_2
+    }
+    
+    node "<<Container>>\nflaky-service" as Flaky {
+      artifact "server.js" as js
+      port "9090" as port9090
+    }
+    
+    database "<<Container>>\nPostgreSQL" as DB {
+      port "5432" as port5432
+    }
+  }
+}
+
+' Conexiones externas
+Client --> port80 : HTTPS Request\n(público)
+
+' Conexiones internas
+NGINX --> port8443_1 : Load Balance\n(TLS, interno)
+NGINX --> port8443_2 : Load Balance\n(TLS, interno)
+
+Backend1 --> port9090 : HTTP\n(interno)
+Backend2 --> port9090 : HTTP\n(interno)
+
+Backend1 --> port5432 : JDBC\n(interno)
+Backend2 --> port5432 : JDBC\n(interno)
+
+note right of NGINX
+  **Gatekeeper:**
+  - Único punto de entrada público
+  - Terminación TLS/SSL
+  - Load balancing
+  - Oculta arquitectura interna
+  - Control de acceso centralizado
+  
+  **upstream app_backend:**
+    server backend-app-1:8443
+    server backend-app-2:8443
+end note
+
+note right of Backend1
+  **Backend protegido:**
+  - No expuesto directamente
+  - Comunicación interna segura
+  - TLS entre NGINX-Backend
+  - No visible desde Internet
+end note
+
+note bottom of Network
+  **Red interna (bridge):**
+  - Aislada de Internet
+  - Solo NGINX tiene puerto público
+  - Comunicación intra-container segura
+  - DNS interno (nombres de servicio)
+end note
+
+note left of Client
+  Cliente solo conoce:
+  - http://localhost:8080
+  
+  Cliente NO conoce:
+  - Número de réplicas
+  - IPs internas
+  - Puertos internos
+  - Topología de servicios
+end note
+
+@enduml

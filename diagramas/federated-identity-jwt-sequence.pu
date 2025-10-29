@@ -1,0 +1,139 @@
+@startuml federated-identity-jwt-sequence
+!theme plain
+title Federated Identity (JWT) - Diagrama de Secuencia
+
+actor Usuario
+participant "AuthController" as Controller
+participant "AuthService" as Service
+participant "AuthenticationManager" as AuthManager
+participant "JwtTokenProvider" as JwtProvider
+participant "UserRepository" as Repo
+database "PostgreSQL" as DB
+
+== Login y Generación de JWT ==
+
+Usuario -> Controller: POST /auth/login\n{"email":"user@test.com", "password":"pass123"}
+activate Controller
+
+Controller -> Service: login(email, password)
+activate Service
+
+Service -> AuthManager: authenticate(\n  new UsernamePasswordAuthenticationToken(email, password))
+activate AuthManager
+
+AuthManager -> Repo: findByEmail(email)
+activate Repo
+
+Repo -> DB: SELECT * FROM users WHERE email = ?
+activate DB
+DB --> Repo: User data
+deactivate DB
+
+Repo --> AuthManager: User
+deactivate Repo
+
+note right of AuthManager
+  Verifica contraseña
+  usando PasswordEncoder
+  (BCrypt)
+end note
+
+alt Credenciales válidas
+  AuthManager --> Service: Authentication (success)
+  deactivate AuthManager
+  
+  Service -> JwtProvider: generateToken(authentication)
+  activate JwtProvider
+  
+  note right of JwtProvider
+    JWT contiene:
+    - Subject (user email/id)
+    - Issued at (timestamp)
+    - Expiration (3600s = 1h)
+    - Signature (HMAC SHA256)
+    
+    Secret: ${JWT_SECRET}
+  end note
+  
+  JwtProvider --> Service: JWT token\n"eyJhbGciOiJIUzI1NiJ9..."
+  deactivate JwtProvider
+  
+  Service --> Controller: LoginResponse(accessToken, expiresIn)
+  deactivate Service
+  
+  Controller --> Usuario: 200 OK\n{"accessToken":"...", "expiresIn":3600}
+  deactivate Controller
+  
+else Credenciales inválidas
+  AuthManager --> Service: BadCredentialsException
+  Service --> Controller: BadCredentialsException
+  Controller --> Usuario: 401 Unauthorized\n{"error":"Invalid credentials"}
+end
+
+== Uso del JWT en Requests Autenticados ==
+
+Usuario -> Controller: GET /playback/status\nAuthorization: Bearer eyJhbGc...
+activate Controller
+
+participant "JwtAuthFilter" as Filter
+
+Controller -> Filter: doFilterInternal(request, response, filterChain)
+activate Filter
+
+Filter -> Filter: Extract JWT from\nAuthorization header
+
+Filter -> JwtProvider: validateToken(token)
+activate JwtProvider
+
+note right of JwtProvider
+  Valida:
+  1. Firma (secret key)
+  2. Expiración
+  3. Formato correcto
+end note
+
+alt Token válido
+  JwtProvider --> Filter: true (valid)
+  deactivate JwtProvider
+  
+  Filter -> JwtProvider: getUsernameFromToken(token)
+  activate JwtProvider
+  JwtProvider --> Filter: "user@test.com"
+  deactivate JwtProvider
+  
+  Filter -> Repo: findByEmail("user@test.com")
+  activate Repo
+  Repo -> DB: SELECT...
+  activate DB
+  DB --> Repo: User
+  deactivate DB
+  Repo --> Filter: UserDetails
+  deactivate Repo
+  
+  note right of Filter
+    Crea Authentication
+    y lo pone en
+    SecurityContext
+  end note
+  
+  Filter -> Controller: Continue with authenticated user
+  deactivate Filter
+  
+  Controller --> Usuario: 200 OK (authorized)
+  deactivate Controller
+  
+else Token inválido/expirado
+  JwtProvider --> Filter: false / Exception
+  Filter --> Usuario: 401 Unauthorized
+end
+
+note bottom of JwtProvider
+  **Ventajas JWT:**
+  - Stateless (no sesiones en servidor)
+  - Escalable horizontalmente
+  - Self-contained (contiene claims)
+  - Verificable con secret key
+  - Expiration automática
+end note
+
+@enduml

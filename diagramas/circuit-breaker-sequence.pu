@@ -1,0 +1,108 @@
+@startuml circuit-breaker-sequence
+!theme plain
+title Patrón Circuit Breaker - Diagrama de Secuencia
+
+actor Usuario
+participant "PlaybackService" as Service
+participant "Circuit Breaker" as CB
+participant "Flaky Service" as Flaky
+participant "Fallback Method" as Fallback
+
+== Estado: CLOSED (Circuito Cerrado) ==
+
+Usuario -> Service: startPlayback(userId, "T1")
+activate Service
+Service -> CB: @CircuitBreaker
+activate CB
+CB -> Flaky: getStreamUrl("T1")
+activate Flaky
+Flaky --> CB: Success: streamUrl
+deactivate Flaky
+CB --> Service: streamUrl
+deactivate CB
+Service --> Usuario: PlaybackDTO(streamUrl)
+deactivate Service
+
+note right of CB: Tasa de fallos: 0%
+
+== Múltiples Fallos ==
+
+loop 6 requests con fallo
+  Usuario -> Service: startPlayback(userId, "T2-T7")
+  activate Service
+  Service -> CB: @CircuitBreaker
+  activate CB
+  CB -> Flaky: getStreamUrl(trackId)
+  activate Flaky
+  Flaky --> CB: Error 500 / Timeout
+  deactivate Flaky
+  CB -> Fallback: fallbackUrl(userId, trackId, exception)
+  activate Fallback
+  Fallback --> CB: PlaybackDTO(fallback URL)
+  deactivate Fallback
+  CB --> Service: PlaybackDTO(fallback)
+  deactivate CB
+  Service --> Usuario: PlaybackDTO(fallback)
+  deactivate Service
+end
+
+note right of CB
+  Tasa de fallos: 6/10 = 60%
+  Supera threshold (50%)
+  **CIRCUITO SE ABRE**
+end note
+
+== Estado: OPEN (Circuito Abierto) ==
+
+Usuario -> Service: startPlayback(userId, "T8")
+activate Service
+Service -> CB: @CircuitBreaker
+activate CB
+
+note right of CB
+  Circuito abierto!
+  No intenta llamar al servicio
+  Va directo a fallback
+end note
+
+CB -> Fallback: fallbackUrl(userId, "T8", CircuitBreakerOpenException)
+activate Fallback
+Fallback --> CB: PlaybackDTO(fallback URL)
+deactivate Fallback
+CB --> Service: PlaybackDTO(fallback) [FAST FAIL]
+deactivate CB
+Service --> Usuario: 200 OK (fallback en ~50ms)
+deactivate Service
+
+note right of Usuario
+  Respuesta inmediata
+  sin esperar timeout
+end note
+
+== Después de waitDurationInOpenState (10s) ==
+
+note right of CB
+  Circuito pasa a HALF_OPEN
+  Permite request de prueba
+end note
+
+Usuario -> Service: startPlayback(userId, "T9")
+activate Service
+Service -> CB: @CircuitBreaker
+activate CB
+CB -> Flaky: getStreamUrl("T9") [Test Request]
+activate Flaky
+Flaky --> CB: Success: streamUrl
+deactivate Flaky
+CB --> Service: streamUrl
+deactivate CB
+Service --> Usuario: PlaybackDTO(streamUrl)
+deactivate Service
+
+note right of CB
+  Request exitoso!
+  **CIRCUITO SE CIERRA**
+  Vuelve a estado normal
+end note
+
+@enduml

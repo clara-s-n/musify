@@ -1,0 +1,82 @@
+@startuml retry-sequence
+!theme plain
+title Patrón Retry - Diagrama de Secuencia
+
+actor Usuario
+participant "PlaybackController" as Controller
+participant "PlaybackService" as Service
+participant "StreamClient" as Client
+participant "Flaky Service\n(40% timeout, 20% error)" as Flaky
+participant "Resilience4j\nRetry" as Retry
+
+Usuario -> Controller: POST /playback/start?trackId=T1
+activate Controller
+
+Controller -> Service: startPlayback(userId, trackId)
+activate Service
+
+Service -> Retry: @Retry(name="streamSource")
+activate Retry
+
+== Intento 1 ==
+Retry -> Client: getStreamUrl(trackId)
+activate Client
+Client -> Flaky: GET /source?trackId=T1
+activate Flaky
+Flaky --> Client: 500 Internal Server Error
+deactivate Flaky
+Client --> Retry: Exception
+deactivate Client
+
+note right of Retry
+  Falló el intento 1
+  Espera 200ms antes 
+  del siguiente intento
+end note
+
+== Intento 2 ==
+Retry -> Client: getStreamUrl(trackId) [Retry 2]
+activate Client
+Client -> Flaky: GET /source?trackId=T1
+activate Flaky
+note right of Flaky: Timeout (no responde)
+Client --> Retry: TimeoutException
+deactivate Flaky
+deactivate Client
+
+note right of Retry
+  Falló el intento 2
+  Backoff exponencial: 400ms
+end note
+
+== Intento 3 ==
+Retry -> Client: getStreamUrl(trackId) [Retry 3]
+activate Client
+Client -> Flaky: GET /source?trackId=T1
+activate Flaky
+Flaky --> Client: 200 OK\nhttps://cdn.example/track/T1
+deactivate Flaky
+Client --> Retry: streamUrl
+deactivate Client
+
+Retry --> Service: streamUrl (éxito en intento 3)
+deactivate Retry
+
+Service --> Controller: PlaybackDTO(trackId, streamUrl)
+deactivate Service
+
+Controller --> Usuario: 200 OK\n{"streamUrl": "https://..."}
+deactivate Controller
+
+note over Usuario, Retry
+  **Configuración:**
+  maxAttempts: 3
+  waitDuration: 200ms
+  enableExponentialBackoff: true
+  
+  **Resultado:** 
+  Sistema se recupera automáticamente
+  de fallos transitorios sin intervención
+end note
+
+@enduml

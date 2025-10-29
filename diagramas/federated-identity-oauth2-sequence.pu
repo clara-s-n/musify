@@ -1,0 +1,151 @@
+@startuml federated-identity-oauth2-sequence
+!theme plain
+title Federated Identity (OAuth2 con Spotify) - Diagrama de Secuencia
+
+participant "SpotifyService" as Service
+participant "Spotify\nAccounts API" as SpotifyAuth
+participant "Spotify\nWeb API" as SpotifyAPI
+
+== Inicialización - Obtener Access Token ==
+
+Service -> Service: @PostConstruct\nfetchAccessToken()
+activate Service
+
+note right of Service
+  Client Credentials Flow
+  (service-to-service auth)
+  
+  No involucra usuario final
+end note
+
+Service -> Service: Encode credentials\nBase64(clientId:clientSecret)
+
+Service -> SpotifyAuth: POST /api/token\nAuthorization: Basic <encoded>\ngrant_type=client_credentials
+activate SpotifyAuth
+
+note right of SpotifyAuth
+  Verifica:
+  - Client ID válido
+  - Client Secret correcto
+  - Aplicación autorizada
+end note
+
+SpotifyAuth --> Service: 200 OK\n{\n  "access_token":"BQC...",\n  "token_type":"Bearer",\n  "expires_in":3600\n}
+deactivate SpotifyAuth
+
+Service -> Service: Store token\naccessToken = "BQC..."\ntokenExpiration = now + 3600s
+deactivate Service
+
+== Uso del Token - Búsqueda de Tracks ==
+
+actor Usuario
+participant "TrackController" as Controller
+
+Usuario -> Controller: GET /tracks/spotify/search?query=rock
+activate Controller
+
+Controller -> Service: searchTracks("rock", 10)
+activate Service
+
+Service -> Service: getAuthHeaders()
+activate Service
+
+alt Token vigente (no expirado)
+  note right of Service
+    Token válido por 1 hora
+    Si quedan > 1 min, usar token actual
+  end note
+  Service --> Service: Return current token
+  deactivate Service
+else Token expirado o por expirar
+  Service -> SpotifyAuth: POST /api/token\n(refresh token)
+  activate SpotifyAuth
+  SpotifyAuth --> Service: New access token
+  deactivate SpotifyAuth
+  Service -> Service: Update accessToken
+end
+
+Service -> SpotifyAPI: GET /v1/search?q=rock&type=track\nAuthorization: Bearer BQC...
+activate SpotifyAPI
+
+note right of SpotifyAPI
+  API de Spotify valida:
+  - Token válido
+  - No expirado
+  - Permisos adecuados
+end note
+
+SpotifyAPI --> Service: 200 OK\n{"tracks":{"items":[...]}}
+deactivate SpotifyAPI
+
+Service --> Controller: List<SpotifyTrackDto>
+deactivate Service
+
+Controller --> Usuario: 200 OK\n[{track1}, {track2}, ...]
+deactivate Controller
+
+== Refresh Automático Programado ==
+
+participant "Spring\nScheduler" as Scheduler
+
+Scheduler -> Service: @Scheduled(fixedRate=3000000)\nfetchAccessToken()
+activate Service
+
+note right of Service
+  Ejecuta cada 50 minutos
+  (token válido por 60 min)
+  
+  Previene expiración
+  durante requests
+end note
+
+Service -> SpotifyAuth: POST /api/token\n(refresh before expiry)
+activate SpotifyAuth
+SpotifyAuth --> Service: New access token
+deactivate SpotifyAuth
+
+Service -> Service: Update accessToken
+deactivate Service
+
+== Manejo de Errores con Resilience ==
+
+Usuario -> Controller: GET /tracks/spotify/search?query=jazz
+activate Controller
+
+Controller -> Service: searchTracks("jazz", 10)
+activate Service
+
+Service -> SpotifyAPI: GET /v1/search?q=jazz...\nAuthorization: Bearer ...
+activate SpotifyAPI
+
+alt API falla (rate limit, network, etc)
+  SpotifyAPI --> Service: 429 Too Many Requests\nOR Network Error
+  deactivate SpotifyAPI
+  
+  note right of Service
+    @Retry intenta hasta 3 veces
+    @CircuitBreaker abre si falla mucho
+    Fallback retorna lista vacía
+  end note
+  
+  Service --> Controller: Empty list (graceful degradation)
+  deactivate Service
+  
+  Controller --> Usuario: 200 OK\n[] (empty results)
+  deactivate Controller
+end
+
+note bottom of Service
+  **Ventajas OAuth2 Client Credentials:**
+  - Autenticación service-to-service
+  - No requiere intervención de usuario
+  - Token auto-renovable
+  - Integración segura con API externa
+  - Credenciales no expuestas en requests
+  
+  **Configuración:**
+  spotify.client.id=${SPOTIFY_CLIENT_ID}
+  spotify.client.secret=${SPOTIFY_CLIENT_SECRET}
+end note
+
+@enduml

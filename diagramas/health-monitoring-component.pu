@@ -1,0 +1,97 @@
+@startuml health-monitoring-component
+!theme plain
+title Health Endpoint Monitoring - Diagrama de Componentes
+
+package "Spring Boot Application" {
+  component "Spring Boot\nActuator" as Actuator
+  
+  component "Health\nEndpoint" as HealthEndpoint {
+    port "/actuator/health" as healthPort
+  }
+  
+  component "Database\nHealth Indicator" as DBHealth
+  component "Disk Space\nHealth Indicator" as DiskHealth
+  component "Application\nHealth Indicator" as AppHealth
+  
+  component "Metrics\nEndpoint" as Metrics {
+    port "/actuator/metrics" as metricsPort
+  }
+}
+
+database "PostgreSQL" as DB
+
+cloud "Monitoring Tools" {
+  component "Prometheus" as Prom
+  component "Grafana" as Graf
+  component "Load Balancer\n(NGINX)" as LB
+}
+
+actor "DevOps" as DevOps
+actor "User" as User
+
+' Relaciones internas
+Actuator --> HealthEndpoint
+Actuator --> Metrics
+HealthEndpoint --> DBHealth
+HealthEndpoint --> DiskHealth
+HealthEndpoint --> AppHealth
+
+DBHealth --> DB : Check connection
+
+' Acceso externo
+User --> healthPort : GET /actuator/health
+DevOps --> healthPort : Monitor health
+DevOps --> metricsPort : GET /actuator/metrics
+
+LB --> healthPort : Health checks
+Prom --> metricsPort : Scrape metrics
+Graf --> Prom : Visualize
+
+note right of HealthEndpoint
+  **Respuesta JSON:**
+  {
+    "status": "UP",
+    "components": {
+      "db": {
+        "status": "UP",
+        "details": {...}
+      },
+      "diskSpace": {
+        "status": "UP",
+        "details": {...}
+      }
+    }
+  }
+end note
+
+note right of DBHealth
+  Verifica:
+  - Conexión a PostgreSQL
+  - Tiempo de respuesta
+  - Pool de conexiones
+end note
+
+note right of DiskHealth
+  Verifica:
+  - Espacio disponible
+  - Threshold configurado
+end note
+
+note right of AppHealth
+  Verifica:
+  - Estado de aplicación
+  - Servicios críticos
+end note
+
+note bottom of Actuator
+  **Configuración:**
+  management.endpoints.web.exposure.include=health,info,metrics
+  
+  **Beneficios:**
+  - Detección temprana de problemas
+  - Integración con monitoreo
+  - Load balancer health checks
+  - Visibilidad en tiempo real
+end note
+
+@enduml
