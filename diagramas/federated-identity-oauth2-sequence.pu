@@ -135,17 +135,4 @@ alt API falla (rate limit, network, etc)
   deactivate Controller
 end
 
-note bottom of Service
-  **Ventajas OAuth2 Client Credentials:**
-  - Autenticación service-to-service
-  - No requiere intervención de usuario
-  - Token auto-renovable
-  - Integración segura con API externa
-  - Credenciales no expuestas en requests
-  
-  **Configuración:**
-  spotify.client.id=${SPOTIFY_CLIENT_ID}
-  spotify.client.secret=${SPOTIFY_CLIENT_SECRET}
-end note
-
 @enduml

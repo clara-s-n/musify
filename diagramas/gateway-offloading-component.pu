@@ -21,77 +21,55 @@ package "Backend Cluster" {
 actor Cliente
 database PostgreSQL
 
-Cliente -> TLS : HTTPS Request
-TLS -> Proxy : HTTP (decrypted)
-Proxy -> LB : Route request
+' Flujos principales (dependencias con etiquetas)
+Cliente --> TLS : HTTPS Request
+TLS --> Proxy : HTTP (decrypted)
+Proxy --> LB : Route request
+LB --> HealthCheck : Check backend health
+HealthCheck --> LB : Available backends
+LB --> Retry : Select backend
+Retry --> ConnPool : Reuse connection
+ConnPool --> Timeout : Apply timeouts
+Timeout --> B1 : Forward request (preferencia)
+Timeout --> B2 : Fallback si B1 no disponible
 
-LB -> HealthCheck : Check backend health
-HealthCheck -> LB : Available backends
+B1 --> PostgreSQL : Query
+PostgreSQL --> B1 : Data
+B2 --> PostgreSQL : Query
+PostgreSQL --> B2 : Data
 
-LB -> Retry : Send to backend
-Retry -> ConnPool : Reuse connection
-ConnPool -> Timeout : Set timeouts
-
-alt Backend-1 disponible
-  Timeout -> B1 : Forward request
-  B1 -> PostgreSQL : Query
-  PostgreSQL -> B1 : Data
-  B1 -> Gzip : Response
-else Backend-1 failed
-  Timeout -> Retry : Error detected
-  Retry -> B2 : Retry on B2
-  B2 -> PostgreSQL : Query
-  PostgreSQL -> B2 : Data
-  B2 -> Gzip : Response
-end
-
-Gzip -> TLS : Compress
-TLS -> Cliente : HTTPS Response
+B1 --> Gzip : Response
+B2 --> Gzip : Response
+Gzip --> TLS : Compress
+TLS --> Cliente : HTTPS Response
 
 note right of TLS
   **Offloaded: TLS/SSL**
-  - Maneja certificados
-  - Encriptación/desencriptación
+  - Certificados y cifrado
   - Backend usa HTTP simple
-  
-  Beneficio: Backend no necesita
-  gestión de certificados
 end note
 
 note right of Retry
   **Offloaded: Retry Logic**
-  proxy_next_upstream error timeout 
-    http_500 http_502 http_503 http_504
+  proxy_next_upstream error timeout http_500 http_502 http_503 http_504
   proxy_next_upstream_tries 3
-  
-  Beneficio: Reintentos automáticos
-  sin código en aplicación
 end note
 
 note right of HealthCheck
   **Offloaded: Health Checks**
   max_fails=3
   fail_timeout=10s
-  
-  Beneficio: Detección automática
-  de backends caídos
 end note
 
 note right of ConnPool
   **Offloaded: Connection Pooling**
   keepalive 32
-  
-  Beneficio: Reutilización de
-  conexiones TCP, reduce overhead
 end note
 
 note right of Gzip
   **Offloaded: Compression**
   gzip on
   gzip_types application/json ...
-  
-  Beneficio: Backend no necesita
-  comprimir responses
 end note
 
 note right of Timeout
@@ -99,20 +77,11 @@ note right of Timeout
   proxy_connect_timeout 10s
   proxy_send_timeout 10s
   proxy_read_timeout 10s
-  
-  Beneficio: Control centralizado
-  de timeouts
 end note
 
 note bottom of B1
   **Backend simplificado:**
   - Solo lógica de negocio
-  - No maneja TLS
-  - No implementa retries
-  - No comprime respuestas
-  - No gestiona connection pooling
-  
-  = Código más simple y mantenible
+  - Sin TLS / retries / compresión / pooling
 end note
-
 @enduml

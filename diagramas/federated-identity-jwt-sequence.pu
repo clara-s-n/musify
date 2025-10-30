@@ -127,13 +127,4 @@ else Token inválido/expirado
   Filter --> Usuario: 401 Unauthorized
 end
 
-note bottom of JwtProvider
-  **Ventajas JWT:**
-  - Stateless (no sesiones en servidor)
-  - Escalable horizontalmente
-  - Self-contained (contiene claims)
-  - Verificable con secret key
-  - Expiration automática
-end note
-
 @enduml
