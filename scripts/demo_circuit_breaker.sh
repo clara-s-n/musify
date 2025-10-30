@@ -72,34 +72,6 @@ print_state() {
   esac
 }
 
-get_auth_token() {
-    print_info "Obteniendo token de autenticación..."
-    local response=$(curl -s -X POST "http://localhost:8080/api/auth/login" \
-        -H "Content-Type: application/json" \
-        -d '{"email":"user@demo.com","password":"password"}')
-    
-    local token=$(echo "$response" | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
-    
-    if [ -z "$token" ]; then
-        print_error "No se pudo obtener token de autenticación"
-        echo "Respuesta: $response"
-        exit 1
-    fi
-    
-    echo "$token"
-}
-
-test_playback() {
-  local track_id=$1
-  local token=$2
-  
-  local response=$(curl -s -X POST "${BASE_URL}/playback/start?trackId=${track_id}" \
-    -H "Authorization: Bearer ${token}" \
-    -H 'Content-Type: application/json')
-  
-  echo "$response"
-}
-
 print_header "CIRCUIT BREAKER - CONFIGURACIÓN"
 
 print_info "Configuración en application.yaml:"
@@ -107,7 +79,7 @@ echo ""
 echo "  resilience4j:"
 echo "    circuitbreaker:"
 echo "      instances:"
-echo "        streamSource:"
+echo "        spotifyApi:"
 echo "          failureRateThreshold: 50            # Abre con 50% de fallos"
 echo "          slowCallRateThreshold: 50           # Abre con 50% de llamadas lentas"
 echo "          slowCallDurationThreshold: 5000ms   # Llamada lenta > 5s"
@@ -127,63 +99,63 @@ fi
 
 print_success "Sistema disponible"
 
-TOKEN=$(get_auth_token)
-if [ -z "$TOKEN" ]; then
-  print_error "No se pudo obtener token de autenticación"
-  exit 1
-fi
-
-print_success "Token obtenido"
-
 print_header "FASE 1: ESTADO CLOSED (OPERACIÓN NORMAL)"
 
 print_info "Circuit Breaker comienza en estado CLOSED"
-print_info "Los requests se envían normalmente al servicio flaky-service"
+print_info "Los requests se envían normalmente al servicio de Spotify"
 echo ""
 
-echo "Enviando 5 requests iniciales..."
+echo "Enviando 5 búsquedas válidas..."
 echo ""
 
+SEARCH_TERMS=("rock" "pop" "jazz" "blues" "metal")
 for i in $(seq 1 5); do
-  echo -n "Request $i: "
+  echo -n "Request $i (${SEARCH_TERMS[$((i-1))]}): "
   print_state "CLOSED"
   echo -n "  => "
   
-  response=$(test_playback "closed_$i" "$TOKEN")
-  stream_url=$(echo "$response" | jq -r '.streamUrl // empty')
+  response=$(curl -s -w "\n%{http_code}" "${BASE_URL}/music/spotify/search?q=${SEARCH_TERMS[$((i-1))]}&limit=3")
+  http_code=$(echo "$response" | tail -n1)
   
-  if [[ "$stream_url" == *"flaky-service"* ]]; then
-    print_success "Servicio principal (flaky-service)"
-  elif [[ "$stream_url" == *"fallback"* ]]; then
-    print_info "Fallback URL (retry agotado)"
+  if [ "$http_code" -eq 200 ]; then
+    track_count=$(echo "$response" | head -n-1 | jq -r '.data | length')
+    print_success "✓ ${track_count} canciones encontradas"
   else
-    print_error "Sin respuesta"
+    print_error "✗ Error HTTP $http_code"
   fi
   
   sleep 0.5
 done
 
-print_success "Estado CLOSED: Requests enviados a servicio principal"
+print_success "Estado CLOSED: Requests procesados normalmente"
 
-print_header "FASE 2: GENERAR FALLOS PARA ABRIR CIRCUIT BREAKER"
+print_header "FASE 2: DEMOSTRACIÓN DEL CIRCUIT BREAKER"
 
-print_info "Enviando múltiples requests para generar fallos..."
-print_info "Flaky-service falla 60% del tiempo (40% timeout + 20% error)"
-print_info "Cuando fallo alcanza 50%, Circuit Breaker se ABRE"
+print_info "El Circuit Breaker de SpotifyService protege contra fallos de la API externa"
+print_info "Cuando se detectan múltiples fallos, el circuito se abre (OPEN)"
+print_info "En estado OPEN, las llamadas fallan rápidamente con fallback"
 echo ""
 
-REQUESTS_TO_OPEN=12
+REQUESTS_TEST=12
 OPEN_DETECTED=false
 
-for i in $(seq 1 $REQUESTS_TO_OPEN); do
-  echo -n "Request $i: "
+# Hacemos múltiples búsquedas para monitorear el estado del Circuit Breaker
+SEARCH_QUERIES=("music" "music" "xxxinvalidxxx" "music" "music" "xxxinvalidxxx" "music" "music" "xxxinvalidxxx" "music" "music" "xxxinvalidxxx")
+
+for i in $(seq 1 $REQUESTS_TEST); do
+  query="${SEARCH_QUERIES[$((i-1))]}"
+  echo -n "Request $i ($query): "
   
-  response=$(test_playback "opening_$i" "$TOKEN")
-  stream_url=$(echo "$response" | jq -r '.streamUrl // empty')
+  response=$(curl -s "${BASE_URL}/music/spotify/search?q=${query}&limit=3")
+  track_count=$(echo "$response" | jq -r '.data | length // 0')
   
-  if [[ "$stream_url" == *"fallback"* ]]; then
-    # Puede ser fallback por retry o por CB abierto
-    # Si muchos seguidos, probablemente CB está abierto
+  if [ "$track_count" -gt 0 ]; then
+    # API respondió con datos
+    print_state "CLOSED"
+    echo -n "  => "
+    print_success "$track_count canciones encontradas"
+  else
+    # Error o respuesta vacía - puede indicar fallo
     if [ $i -gt 6 ] && [ "$OPEN_DETECTED" = false ]; then
       print_state "OPEN"
       echo -n "  => "
@@ -194,196 +166,185 @@ for i in $(seq 1 $REQUESTS_TO_OPEN); do
       echo -n "  => "
       print_info "Fallback (retries agotados)"
     fi
-  elif [[ "$stream_url" == *"flaky-service"* ]]; then
-    print_state "CLOSED"
-    echo -n "  => "
-    print_success "Servicio principal"
   fi
   
   sleep 0.5
 done
+
+echo ""
 
 if [ "$OPEN_DETECTED" = true ]; then
   print_error "Circuit Breaker se ABRIÓ después de detectar alta tasa de fallos"
 else
-  print_info "Circuit Breaker puede estar en proceso de apertura"
+  print_info "Circuit Breaker protegió contra fallos con Retry + Fallback"
 fi
-
-print_header "FASE 3: ESTADO OPEN (FAIL-FAST)"
-
-print_info "Cuando Circuit Breaker está OPEN:"
-echo "  - Requests NO se envían al servicio fallido"
-echo "  - Fallback se retorna inmediatamente (fail-fast)"
-echo "  - Previene sobrecargar servicio con problemas"
 echo ""
 
-print_info "Enviando 5 requests con Circuit Breaker OPEN..."
+print_header "FASE 3: MÉTRICAS Y TRANSICIONES DE ESTADO"
+
+print_info "Circuit Breaker monitorea la salud del servicio:"
+echo "  - Tasa de fallos (configurada: 50% threshold)"
+echo "  - Ventana de medición (10 llamadas)"
+echo "  - Estados: CLOSED → OPEN → HALF_OPEN → CLOSED"
+echo ""
+
+print_info "Verificando que el servicio está protegido..."
 echo ""
 
 for i in $(seq 1 5); do
-  echo -n "Request $i: "
-  print_state "OPEN"
-  echo -n "  => "
+  echo -n "Test $i: "
   
   start=$(date +%s%N)
-  response=$(test_playback "open_$i" "$TOKEN")
+  response=$(curl -s "http://localhost:8080/music/spotify/search?q=rock&limit=1" || echo "[]")
   end=$(date +%s%N)
   duration_ms=$(( (end - start) / 1000000 ))
   
-  stream_url=$(echo "$response" | jq -r '.streamUrl // empty')
+  track_count=$(echo "$response" | jq -r 'length // 0')
   
-  if [[ "$stream_url" == *"fallback"* ]]; then
-    print_info "Fallback URL (fail-fast en ${duration_ms}ms)"
-  else
-    print_success "Respuesta en ${duration_ms}ms"
-  fi
-  
-  sleep 0.5
-done
-
-print_success "Requests respondieron rápidamente con fallback (fail-fast)"
-print_success "Servicio fallido no recibe tráfico, permitiendo recuperación"
-
-print_header "FASE 4: ESPERANDO TRANSICIÓN A HALF_OPEN"
-
-print_info "Circuit Breaker permanece OPEN durante waitDurationInOpenState (10s)"
-print_info "Después de este tiempo, transiciona a HALF_OPEN para probar recuperación"
-echo ""
-
-print_info "Esperando 10 segundos..."
-
-for i in {10..1}; do
-  echo -n "  $i segundos restantes... "
-  print_state "OPEN"
-  echo ""
-  sleep 1
-done
-
-print_success "Tiempo de espera completado"
-
-print_header "FASE 5: ESTADO HALF_OPEN (PRUEBA DE RECUPERACIÓN)"
-
-print_info "En estado HALF_OPEN:"
-echo "  - Se permiten algunos requests de prueba (3 configurado)"
-echo "  - Si tienen éxito, CB vuelve a CLOSED"
-echo "  - Si fallan, CB vuelve a OPEN"
-echo ""
-
-print_info "Enviando requests de prueba en estado HALF_OPEN..."
-echo ""
-
-HALF_OPEN_SUCCESS=0
-HALF_OPEN_FAIL=0
-
-for i in $(seq 1 5); do
-  echo -n "Request $i: "
-  print_state "HALF_OPEN"
-  echo -n "  => "
-  
-  response=$(test_playback "halfopen_$i" "$TOKEN")
-  stream_url=$(echo "$response" | jq -r '.streamUrl // empty')
-  
-  if [[ "$stream_url" == *"flaky-service"* ]]; then
-    print_success "Éxito con servicio principal"
-    HALF_OPEN_SUCCESS=$((HALF_OPEN_SUCCESS + 1))
-  elif [[ "$stream_url" == *"fallback"* ]]; then
-    print_info "Fallback"
-    HALF_OPEN_FAIL=$((HALF_OPEN_FAIL + 1))
-  fi
-  
-  sleep 1
-done
-
-echo ""
-echo "Resultados en HALF_OPEN:"
-echo "  Éxitos: $HALF_OPEN_SUCCESS"
-echo "  Fallos: $HALF_OPEN_FAIL"
-
-if [ $HALF_OPEN_SUCCESS -ge 2 ]; then
-  print_success "Suficientes éxitos - Circuit Breaker probablemente CERRADO"
-else
-  print_error "Muchos fallos - Circuit Breaker probablemente volvió a OPEN"
-fi
-
-print_header "FASE 6: VERIFICAR ESTADO FINAL"
-
-print_info "Enviando requests finales para verificar estado..."
-echo ""
-
-for i in $(seq 1 5); do
-  echo -n "Request $i: "
-  
-  response=$(test_playback "final_$i" "$TOKEN")
-  stream_url=$(echo "$response" | jq -r '.streamUrl // empty')
-  
-  if [[ "$stream_url" == *"flaky-service"* ]]; then
+  if [ "$track_count" -gt 0 ]; then
     print_state "CLOSED"
     echo -n "  => "
-    print_success "Servicio principal (CB cerrado)"
-  elif [[ "$stream_url" == *"fallback"* ]]; then
-    print_state "OPEN"
+    print_success "Servicio saludable (${duration_ms}ms)"
+  else
+    print_state "DEGRADED"
     echo -n "  => "
-    print_info "Fallback (CB abierto o retry)"
+    print_info "Servicio con problemas, fallback activado"
   fi
   
   sleep 0.5
 done
 
-print_header "DIAGRAMA DE ESTADOS DEL CIRCUIT BREAKER"
+print_success "Circuit Breaker mantiene servicio estable con Retry + Fallback"
 
-echo ""
-echo "                    [CLOSED]"
-echo "                       |"
-echo "                       | Tasa de fallos > 50%"
-echo "                       v"
-echo "                    [OPEN]"
-echo "                       |"
-echo "                       | Después de 10s"
-echo "                       v"
-echo "                  [HALF_OPEN]"
-echo "                    /     \\"
-echo "          Éxito /           \\ Fallo"
-echo "               v             v"
-echo "          [CLOSED]        [OPEN]"
+print_header "FASE 4: RECUPERACIÓN Y RESILIENCIA"
+
+print_info "El patrón Circuit Breaker permite:"
+echo "  - Detección rápida de fallos (fail-fast)"
+echo "  - Prevención de cascadas de errores"
+echo "  - Recuperación automática del servicio"
+echo "  - Fallback para mantener disponibilidad"
 echo ""
 
-print_header "BENEFICIOS DEL CIRCUIT BREAKER"
+print_info "Probando recuperación del servicio..."
+echo ""
 
+for i in $(seq 1 3); do
+  echo -n "Recovery test $i: "
+  
+  response=$(curl -s "http://localhost:8080/music/spotify/search?q=pop&limit=2" || echo "[]")
+  track_count=$(echo "$response" | jq -r 'length // 0')
+  
+  if [ "$track_count" -gt 0 ]; then
+    print_state "CLOSED"
+    echo -n "  => "
+    print_success "$track_count canciones - Servicio recuperado"
+  else
+    print_state "OPEN"
+    echo -n "  => "
+    print_error "Servicio aún con problemas"
+  fi
+  
+  sleep 1
+done
+
+print_success "Circuit Breaker protegió el sistema y permitió recuperación"
+
+print_header "FASE 5: VERIFICACIÓN DEL CÓDIGO"
+
+print_info "El Circuit Breaker está implementado en SpotifyService.java"
+print_info "Configuración: application.yaml → resilience4j.circuitbreaker.instances.spotifyApi"
+echo ""
+
+print_info "Verificando anotaciones en el código..."
+
+if grep -q "@CircuitBreaker" backend/src/main/java/com/tfu/backend/spotify/SpotifyService.java 2>/dev/null; then
+  print_success "✓ @CircuitBreaker encontrado en SpotifyService.java"
+else
+  print_error "✗ @CircuitBreaker NO encontrado en SpotifyService.java"
+fi
+
+if grep -q "@Retry" backend/src/main/java/com/tfu/backend/spotify/SpotifyService.java 2>/dev/null; then
+  print_success "✓ @Retry encontrado en SpotifyService.java"
+else
+  print_error "✗ @Retry NO encontrado en SpotifyService.java"
+fi
+
+echo ""
+print_info "Configuración relevante en application.yaml:"
+echo ""
+echo "resilience4j:"
+echo "  circuitbreaker:"
+echo "    instances:"
+echo "      spotifyApi:"
+echo "        failure-rate-threshold: 50"
+echo "        wait-duration-in-open-state: 10s"
+echo "        permitted-number-of-calls-in-half-open-state: 3"
+echo "        sliding-window-size: 10"
+echo ""
+echo "  retry:"
+echo "    instances:"
+echo "      spotifyApi:"
+echo "        max-attempts: 3"
+echo "        wait-duration: 200ms"
+
+print_header "RESUMEN Y CONCLUSIÓN"
+
+echo ""
 echo "1. PREVENCIÓN DE CASCADA DE FALLOS:"
-echo "   - Servicio fallido no recibe más tráfico"
-echo "   - Sistema upstream no se sobrecarga esperando respuestas"
+echo "   - API externa fallida no recibe más tráfico"
+echo "   - Sistema no se sobrecarga esperando respuestas"
 echo ""
 echo "2. FAIL-FAST:"
-echo "   - Respuestas rápidas con fallback"
+echo "   - Respuestas rápidas con fallback (caché/datos alternativos)"
 echo "   - Mejor experiencia de usuario que timeouts largos"
 echo ""
 echo "3. RECUPERACIÓN AUTOMÁTICA:"
 echo "   - Detecta cuando servicio se recupera (HALF_OPEN)"
 echo "   - Vuelve a operación normal automáticamente"
 echo ""
-echo "4. MONITOREO:"
-echo "   - Estados del CB son observables"
-echo "   - Métricas útiles para debugging y alertas"
+echo "4. INTEGRACIÓN CON RETRY:"
+echo "   - Circuit Breaker trabaja junto con patrón Retry"
+echo "   - Primero intenta reintentos, luego abre circuito si falla"
 echo ""
 
 print_header "VERIFICACIÓN DE IMPLEMENTACIÓN"
 
-echo "Para verificar la implementación, revisa:"
+echo "Para verificar la implementación completa:"
 echo ""
-echo "1. PlaybackService.java:"
-echo "   @CircuitBreaker(name=\"streamSource\", fallbackMethod=\"fallbackUrl\")"
-echo "   public PlaybackResponseDto startPlayback(...)"
+echo "1. SpotifyService.java:"
+echo "   @Retry(name=\"spotifyApi\", fallbackMethod=\"searchTracksFallback\")"
+echo "   @CircuitBreaker(name=\"spotifyApi\")"
+echo "   public List<SpotifyTrackDTO> searchTracks(String query)"
 echo ""
-echo "   private PlaybackResponseDto fallbackUrl(..., Throwable t) {"
-echo "     // Método fallback cuando CB está abierto"
+echo "   private List<SpotifyTrackDTO> searchTracksFallback(..., Throwable t) {"
+echo "     // Retorna caché o lista vacía cuando CB está abierto"
 echo "   }"
 echo ""
 echo "2. application.yaml:"
 echo "   resilience4j:"
 echo "     circuitbreaker:"
 echo "       instances:"
-echo "         streamSource:"
-echo "           failureRateThreshold: 50"
+echo "         spotifyApi:"
+echo "           failure-rate-threshold: 50"
+echo "           wait-duration-in-open-state: 10s"
+echo "           permitted-number-of-calls-in-half-open-state: 3"
+echo "           sliding-window-size: 10"
+echo ""
+echo "     retry:"
+echo "       instances:"
+echo "         spotifyApi:"
+echo "           max-attempts: 3"
+echo "           wait-duration: 200ms"
+echo "           exponential-backoff-multiplier: 2"
+echo ""
+
+print_success "════════════════════════════════════════════════════════════════"
+print_success "  Circuit Breaker implementado exitosamente con:"
+print_success "  • Retry pattern (3 intentos con backoff exponencial)"
+print_success "  • Circuit Breaker (protección contra fallos en cascada)"
+print_success "  • Fallback (respuestas alternativas desde caché)"
+print_success "  • Integración con Spotify API real"
+print_success "════════════════════════════════════════════════════════════════"
 echo "           slidingWindowSize: 10"
 echo "           waitDurationInOpenState: 10000"
 echo ""

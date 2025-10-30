@@ -105,17 +105,17 @@ print_info "Verificando estado de los contenedores..."
 echo ""
 
 echo -n "backend-app-1: "
-check_container_status "backend-app-1"
+check_container_status "backend-app-1" || true
 
 echo -n "backend-app-2: "
-check_container_status "backend-app-2"
+check_container_status "backend-app-2" || true
 
 echo -n "nginx: "
-check_container_status "nginx"
+check_container_status "nginx" || true
 
 echo ""
 echo -n "Health endpoint: "
-test_health_endpoint
+test_health_endpoint || true
 
 if ! curl -s -f "${BASE_URL}/actuator/health" > /dev/null 2>&1; then
   print_error "Sistema no está disponible"
@@ -144,10 +144,10 @@ docker stop backend-app-1 > /dev/null 2>&1
 sleep 2
 
 echo -n "backend-app-1: "
-check_container_status "backend-app-1"
+check_container_status "backend-app-1" || true
 
 echo -n "backend-app-2: "
-check_container_status "backend-app-2"
+check_container_status "backend-app-2" || true
 
 echo ""
 
@@ -178,7 +178,7 @@ print_info "Esperando a que la réplica se inicialice..."
 sleep 8
 
 echo -n "backend-app-1: "
-check_container_status "backend-app-1"
+check_container_status "backend-app-1" || true
 
 echo ""
 

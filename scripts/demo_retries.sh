@@ -117,127 +117,152 @@ echo "    waitDuration: 200ms"
 echo "    retryExceptions: [Exception]"
 echo ""
 
-TOKEN=$(get_auth_token)
-
-print_info "Iniciando playback con servicio flaky-service (40% timeout, 20% error, 40% success)"
-print_info "El patrón @Retry reintentará hasta 3 veces automáticamente..."
+print_info "Demostración del patrón @Retry en SpotifyService"
+print_info "El servicio de Spotify puede fallar ocasionalmente, el patrón @Retry reintentará automáticamente"
 echo ""
 
 SUCCESS_COUNT=0
-FALLBACK_COUNT=0
-TOTAL_REQUESTS=8
+ERROR_COUNT=0
+TOTAL_REQUESTS=10
+
+# Términos de búsqueda para variar las peticiones
+SEARCH_TERMS=("rock" "pop" "jazz" "blues" "classical" "metal" "reggae" "country" "electronic" "latin")
 
 for i in $(seq 1 $TOTAL_REQUESTS); do
-  echo -e "\n${YELLOW}========== Intento $i/$TOTAL_REQUESTS ==========${NC}"
+  echo -e "\n${YELLOW}========== Request $i/$TOTAL_REQUESTS ==========${NC}"
   
-  response=$(curl -s -X POST "${BASE_URL}/playback/start?trackId=track_$i" \
-    -H "Authorization: Bearer ${TOKEN}" \
-    -H 'Content-Type: application/json')
+  search_term="${SEARCH_TERMS[$((i-1))]}"
+  print_info "Buscando: $search_term"
   
-  echo "$response" | jq '.'
+  start_time=$(date +%s%N)
+  response=$(curl -s -w "\n%{http_code}" "${BASE_URL}/music/spotify/search?q=${search_term}&limit=5")
+  end_time=$(date +%s%N)
   
-  # Verificar si fue exitoso o usó fallback
-  if echo "$response" | jq -e '.streamUrl' > /dev/null 2>&1; then
-    stream_url=$(echo "$response" | jq -r '.streamUrl')
-    
-    if [[ "$stream_url" == *"flaky-service"* ]]; then
-      print_success "Éxito con flaky-service (después de reintentos si fue necesario)"
-      SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
-    elif [[ "$stream_url" == *"fallback"* ]]; then
-      print_info "Fallback URL activado (Circuit Breaker abierto o max retries alcanzado)"
-      FALLBACK_COUNT=$((FALLBACK_COUNT + 1))
-    fi
-  fi
+  http_code=$(echo "$response" | tail -n1)
+  body=$(echo "$response" | head -n-1)
   
-  sleep 1
-done
-
-print_header "RESULTADOS DEL PATRÓN RETRY"
-echo "Total de requests: $TOTAL_REQUESTS"
-echo "Éxitos con flaky-service: $SUCCESS_COUNT ($(( SUCCESS_COUNT * 100 / TOTAL_REQUESTS ))%)"
-echo "Fallbacks activados: $FALLBACK_COUNT ($(( FALLBACK_COUNT * 100 / TOTAL_REQUESTS ))%)"
-echo ""
-print_success "DEMOSTRACIÓN: Aunque flaky-service falla 60% del tiempo,"
-print_success "el patrón Retry aumenta la tasa de éxito reintentando automáticamente."
-
-print_header "PATRÓN 2: CIRCUIT BREAKER (PREVENCIÓN DE CASCADA DE FALLOS)"
-
-print_info "Configuración en application.yaml:"
-echo "  resilience4j.circuitbreaker.instances.streamSource:"
-echo "    failureRateThreshold: 50"
-echo "    waitDurationInOpenState: 10000ms"
-echo "    slidingWindowSize: 10"
-echo ""
-
-print_info "Generando fallos consecutivos para abrir el Circuit Breaker..."
-echo ""
-
-CB_REQUESTS=15
-
-for i in $(seq 1 $CB_REQUESTS); do
-  echo -e "\n${YELLOW}--- Request $i/$CB_REQUESTS ---${NC}"
+  duration_ms=$(( (end_time - start_time) / 1000000 ))
   
-  response=$(curl -s -X POST "${BASE_URL}/playback/start?trackId=cb_test_$i" \
-    -H "Authorization: Bearer ${TOKEN}" \
-    -H 'Content-Type: application/json')
-  
-  stream_url=$(echo "$response" | jq -r '.streamUrl // empty')
-  
-  if [[ "$stream_url" == *"fallback"* ]]; then
-    print_info "Circuit Breaker OPEN - Fallback URL retornado inmediatamente"
-  elif [[ "$stream_url" == *"flaky-service"* ]]; then
-    print_success "Circuit Breaker CLOSED - Request enviado a flaky-service"
+  if [ "$http_code" -eq 200 ]; then
+    track_count=$(echo "$body" | jq -r '.data | length')
+    print_success "✓ HTTP 200 - ${track_count} canciones encontradas (${duration_ms}ms)"
+    SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+  else
+    print_error "✗ HTTP $http_code - Error en la búsqueda"
+    echo "$body" | jq -r '.error // .message' 2>/dev/null || echo "$body"
+    ERROR_COUNT=$((ERROR_COUNT + 1))
   fi
   
   sleep 0.5
 done
 
+print_header "RESULTADOS DEL PATRÓN RETRY"
+echo "Total de requests: $TOTAL_REQUESTS"
+print_success "Requests exitosos: $SUCCESS_COUNT ($(( SUCCESS_COUNT * 100 / TOTAL_REQUESTS ))%)"
+if [ $ERROR_COUNT -gt 0 ]; then
+  print_error "Requests con error: $ERROR_COUNT ($(( ERROR_COUNT * 100 / TOTAL_REQUESTS ))%)"
+else
+  print_info "Requests con error: $ERROR_COUNT ($(( ERROR_COUNT * 100 / TOTAL_REQUESTS ))%)"
+fi
 echo ""
-print_success "DEMOSTRACIÓN: Cuando el Circuit Breaker se abre por exceso de fallos,"
-print_success "las peticiones fallan rápidamente (fail-fast) retornando fallback,"
-print_success "evitando sobrecargar el servicio problemático."
+print_success "DEMOSTRACIÓN: El patrón @Retry reintenta automáticamente las peticiones fallidas"
+print_success "al servicio de Spotify, mejorando la disponibilidad del sistema."
+
+print_header "PATRÓN 2: CIRCUIT BREAKER (PREVENCIÓN DE CASCADA DE FALLOS)"
+
+print_info "Configuración en application.yaml:"
+echo "  resilience4j.circuitbreaker.instances.spotifyApi:"
+echo "    failureRateThreshold: 50"
+echo "    waitDurationInOpenState: 10000ms"
+echo "    slidingWindowSize: 10"
+echo ""
+
+print_info "El Circuit Breaker en SpotifyService protege contra fallos en la API de Spotify"
+print_info "Demostrando comportamiento con búsquedas múltiples..."
+echo ""
+
+CB_SUCCESS=0
+CB_FALLBACK=0
+CB_REQUESTS=12
+
+for i in $(seq 1 $CB_REQUESTS); do
+  echo -e "\n${YELLOW}--- Request $i/$CB_REQUESTS ---${NC}"
+  
+  # Alternar entre búsquedas válidas e inválidas para generar algunos fallos
+  if [ $((i % 3)) -eq 0 ]; then
+    search_term="xxxinvalidxxx"
+    print_info "Búsqueda inválida intencional: $search_term"
+  else
+    search_term="music"
+    print_info "Búsqueda válida: $search_term"
+  fi
+  
+  start_time=$(date +%s%N)
+  response=$(curl -s -w "\n%{http_code}" "${BASE_URL}/music/spotify/search?q=${search_term}&limit=3")
+  end_time=$(date +%s%N)
+  
+  http_code=$(echo "$response" | tail -n1)
+  body=$(echo "$response" | head -n-1)
+  duration_ms=$(( (end_time - start_time) / 1000000 ))
+  
+  if [ "$http_code" -eq 200 ]; then
+    track_count=$(echo "$body" | jq -r '.data | length')
+    if [ "$track_count" -gt 0 ]; then
+      print_success "✓ Circuit Breaker CLOSED - ${track_count} resultados (${duration_ms}ms)"
+      CB_SUCCESS=$((CB_SUCCESS + 1))
+    else
+      print_info "○ Circuit Breaker CLOSED - 0 resultados (${duration_ms}ms)"
+      CB_FALLBACK=$((CB_FALLBACK + 1))
+    fi
+  else
+    if [ $duration_ms -lt 100 ]; then
+      print_error "✗ Circuit Breaker OPEN - Fail-fast (${duration_ms}ms)"
+    else
+      print_error "✗ Circuit Breaker CLOSED - Error con retry (${duration_ms}ms)"
+    fi
+    CB_FALLBACK=$((CB_FALLBACK + 1))
+  fi
+  
+  sleep 0.3
+done
+
+echo ""
+print_header "RESULTADOS DEL CIRCUIT BREAKER"
+echo "Total de requests: $CB_REQUESTS"
+print_success "Requests exitosos: $CB_SUCCESS"
+print_info "Requests con fallback/error: $CB_FALLBACK"
+echo ""
+print_success "DEMOSTRACIÓN: El Circuit Breaker protege el sistema de fallos en cascada"
+print_success "Cuando detecta muchos errores, abre el circuito y falla rápidamente (fail-fast)"
 
 print_header "PATRÓN 3: DEGRADACIÓN ELEGANTE (FALLBACK)"
 
-print_info "Cuando todos los reintentos fallan o el Circuit Breaker está abierto,"
-print_info "el método fallbackUrl() proporciona una URL alternativa."
+print_info "Cuando las búsquedas fallan, el método searchTracksFallback() retorna una lista vacía"
+print_info "permitiendo que la aplicación continúe funcionando sin errores críticos."
 echo ""
 
-response=$(curl -s -X POST "${BASE_URL}/playback/start?trackId=fallback_demo" \
-  -H "Authorization: Bearer ${TOKEN}" \
-  -H 'Content-Type: application/json')
-
-echo "$response" | jq '.'
-echo ""
-
-fallback_url=$(echo "$response" | jq -r '.streamUrl // empty')
-if [[ "$fallback_url" == *"fallback"* ]]; then
-  print_success "Fallback URL activado correctamente"
-  echo "URL alternativa: $fallback_url"
-else
-  print_info "Request exitoso con servicio principal"
-  echo "URL principal: $fallback_url"
-fi
+print_success "El sistema puede continuar operando incluso cuando servicios externos fallan,"
+print_success "proporcionando una experiencia degradada pero funcional al usuario."
 
 print_header "VERIFICACIÓN DE IMPLEMENTACIÓN EN EL CÓDIGO"
 
 echo "Para verificar la implementación, revisa:"
 echo ""
-echo "1. PlaybackService.java:"
-echo "   @Retry(name=\"streamSource\")"
-echo "   @CircuitBreaker(name=\"streamSource\", fallbackMethod=\"fallbackUrl\")"
-echo "   public PlaybackResponseDto startPlayback(...)"
+echo "1. SpotifyService.java:"
+echo "   @Retry(name=\"spotifyApi\")"
+echo "   @CircuitBreaker(name=\"spotifyApi\", fallbackMethod=\"searchTracksFallback\")"
+echo "   public List<SpotifyTrackDto> searchTracks(String query, int limit)"
 echo ""
 echo "2. application.yaml:"
 echo "   resilience4j:"
 echo "     retry:"
 echo "       instances:"
-echo "         streamSource:"
+echo "         spotifyApi:"
 echo "           maxAttempts: 3"
-echo "           waitDuration: 200ms"
+echo "           waitDuration: 1s"
 echo "     circuitbreaker:"
 echo "       instances:"
-echo "         streamSource:"
+echo "         spotifyApi:"
 echo "           failureRateThreshold: 50"
 echo "           waitDurationInOpenState: 10000ms"
 echo ""

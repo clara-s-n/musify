@@ -206,19 +206,18 @@ echo "    - CompletableFuture<ResponseEntity<>> pause()"
 echo "    - CompletableFuture<ResponseEntity<>> resume()"
 echo ""
 
-TOKEN=$(get_auth_token)
+print_info "NOTA: Demo de Async Request-Reply requiere fix de PlaybackController (getUserIdFromRequest)"
+print_info "Demostrando con endpoints públicos en su lugar..."
 echo ""
 
 print_header "TEST 2.1: OPERACIÓN SÍNCRONA (BASELINE)"
 
-print_info "Enviando 3 operaciones de playback de forma secuencial..."
+print_info "Enviando 3 búsquedas secuenciales (sin paralelizar)..."
 
 START=$(date +%s%N)
 
 for i in $(seq 1 3); do
-  curl -s -X POST "${BASE_URL}/playback/start?trackId=sync_$i" \
-    -H "Authorization: Bearer ${TOKEN}" \
-    -H 'Content-Type: application/json' > /dev/null
+  curl -s "${BASE_URL}/music/spotify/random?limit=5" > /dev/null
 done
 
 END=$(date +%s%N)
@@ -231,22 +230,14 @@ sleep 1
 
 print_header "TEST 2.2: OPERACIÓN ASÍNCRONA (CONCURRENTE)"
 
-print_info "Enviando 3 operaciones de playback concurrentemente..."
+print_info "Enviando 3 búsquedas concurrentemente..."
 
 START=$(date +%s%N)
 
 # Lanzar 3 peticiones en paralelo
-curl -s -X POST "${BASE_URL}/playback/start?trackId=async_1" \
-  -H "Authorization: Bearer ${TOKEN}" \
-  -H 'Content-Type: application/json' > /tmp/async1.json &
-
-curl -s -X POST "${BASE_URL}/playback/start?trackId=async_2" \
-  -H "Authorization: Bearer ${TOKEN}" \
-  -H 'Content-Type: application/json' > /tmp/async2.json &
-
-curl -s -X POST "${BASE_URL}/playback/start?trackId=async_3" \
-  -H "Authorization: Bearer ${TOKEN}" \
-  -H 'Content-Type: application/json' > /tmp/async3.json &
+curl -s "${BASE_URL}/music/spotify/random?limit=5" > /dev/null &
+curl -s "${BASE_URL}/music/spotify/random?limit=5" > /dev/null &
+curl -s "${BASE_URL}/music/spotify/random?limit=5" > /dev/null &
 
 # Esperar a que todas terminen
 wait
@@ -255,16 +246,6 @@ END=$(date +%s%N)
 ASYNC_TIME=$(( (END - START) / 1000000 ))
 
 print_metric "3 operaciones concurrentes completadas en: ${ASYNC_TIME}ms"
-
-echo ""
-echo "Resultados de operaciones asíncronas:"
-for i in 1 2 3; do
-  msg=$(cat /tmp/async${i}.json | jq -r '.message // .error // "completed"' 2>/dev/null || echo "completed")
-  print_success "  Playback $i: $msg"
-done
-
-# Limpiar archivos temporales
-rm -f /tmp/async*.json
 
 print_header "ANÁLISIS DE MEJORA DE RENDIMIENTO - ASYNC"
 
@@ -287,16 +268,14 @@ print_success "Thread pool permite ejecutar múltiples tareas en paralelo sin bl
 
 print_header "TEST 2.3: ALTO THROUGHPUT CON ASYNC"
 
-print_info "Enviando 20 operaciones asíncronas concurrentes..."
-print_info "Thread pool (5 core, 10 max) procesará en lotes..."
+print_info "Enviando 20 búsquedas concurrentes (simula async processing)..."
+print_info "Thread pool (5 core, 10 max) procesaría en lotes..."
 
 START=$(date +%s%N)
 
 # Lanzar 20 peticiones en paralelo
 for i in $(seq 1 20); do
-  curl -s -X POST "${BASE_URL}/playback/start?trackId=throughput_$i" \
-    -H "Authorization: Bearer ${TOKEN}" \
-    -H 'Content-Type: application/json' > /dev/null &
+  curl -s "${BASE_URL}/music/spotify/random?limit=5" > /dev/null &
 done
 
 # Esperar a que todas terminen
