@@ -6,6 +6,7 @@ import { SpotifyPlaybackData, SpotifyTrack } from '../../models/spotify-track-mo
 import { MatCardModule } from '@angular/material/card';
 import { LogoComponent } from '../../components/logo.component/logo.component';
 import { Router } from '@angular/router';
+import { YoutubeService } from '../../services/youtube.service';
 
 @Component({
   selector: 'app-home',
@@ -15,31 +16,18 @@ import { Router } from '@angular/router';
 })
 export class HomeComponent implements OnInit {
   private spotifyService = inject(SpotifyService);
+  private youtubeService = inject(YoutubeService);
   private router = inject(Router);
   randomSongs: SpotifyTrack[] | null = null;
   currentPlayback: SpotifyPlaybackData | null = null;
   isPlaying: boolean = false;
   searchedSongs: SpotifyTrack[] | null = null;
-
+  audioURL: string = '';
   ngOnInit(): void {
     this.spotifyService.getRandomTracks(12).subscribe((tracks) => (this.randomSongs = tracks));
   }
-  playTrack(trackId: string): void {
-    this.spotifyService.getTrackPlayback(trackId).subscribe({
-      next: (playbackData) => {
-        this.currentPlayback = playbackData;
-        this.isPlaying = true;
-
-        if (playbackData.streamUrl) {
-          const audioPlayer = document.getElementById('audioPlayer') as HTMLAudioElement;
-          audioPlayer.src = playbackData.streamUrl;
-          audioPlayer.play();
-        }
-      },
-      error: (error) => {
-        console.error('Error al obtener datos de reproducción:', error);
-      },
-    });
+  playTrack(trackName: string, trackArtist: string): void {
+    this.youtubeService.getAudio(trackName, trackArtist).subscribe((url) => (this.audioURL = url));
   }
   searchHome(tracks: SpotifyTrack[]) {
     this.searchedSongs = tracks;

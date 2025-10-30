@@ -24,6 +24,8 @@ COPY --from=build /build/target/*-SNAPSHOT.jar /app/app.jar
 EXPOSE 8080
 # Variable de entorno para el puerto
 ENV SERVER_PORT=8080
+
+RUN apk update && apk add yt-dlp
 # Comando de entrada para ejecutar la app Spring Boot
 ENTRYPOINT ["java","-jar","/app/app.jar"]
 
