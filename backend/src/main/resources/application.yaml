@@ -33,6 +33,10 @@ spring:
       poll-interval: 2s
       quiet-period: 1s
       additional-exclude: static/**,public/**
+  ## Configuración de cache (Cache-Aside pattern)
+  cache:
+    type: simple
+    cache-names: randomTracks,searchTracks,trackPlayback
   ## Configuración de la base de datos
   datasource:
     url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${POSTGRES_DB:mydatabase}

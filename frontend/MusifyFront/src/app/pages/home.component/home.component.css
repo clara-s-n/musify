@@ -1,20 +1,64 @@
+:root {
+  --player-h: 72px; /* alto del reproductor */
+  --header-h: 72px; /* alto del header */
+}
+
+/* Reset + layout base */
 * {
   box-sizing: border-box;
   font-family: 'SF Pro Display Font Family', sans-serif;
 }
-
+html,
 body {
+  height: 100%;
+  margin: 0;
+}
+body.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   background-image: url('/assets/images/background.png');
+  background-position: center center;
+  background-repeat: no-repeat;
   background-size: cover;
+  background-attachment: fixed;
+
+  background-color: #0b0b0b;
+}
+
+.header-top {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: var(--header-h);
+  padding: 10px 16px;
+}
+
+.content {
+  flex: 1 1 auto;
+  padding-top: calc(var(--header-h) + 40px);
+  padding-left: 75px;
+  padding-right: 16px;
+  padding-bottom: calc(var(--player-h) + 24px);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
 }
 
 .music-card {
   max-width: 20rem;
   display: flex;
+  flex-direction: column;
   padding: 30px;
   color: white;
-  background-color: white;
-  background-color: transparent !important;
+  background: transparent !important;
   box-shadow: none;
 }
 
@@ -25,10 +69,8 @@ body {
   object-fit: cover;
   margin-left: 1rem;
   margin-bottom: 20px;
-  opacity: 1;
-  transition: 0.6s;
+  transition: opacity 0.3s ease;
 }
-
 .music-card img:hover {
   opacity: 0.5;
 }
@@ -36,24 +78,37 @@ body {
   font-size: 1.3em;
   margin-bottom: 5px;
 }
-
 .music-card p {
   font-size: 1em;
   color: #bbb;
 }
 
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  padding-top: 120px;
-  padding-left: 75px;
-}
-.header-top {
-  position: absolute;
-  top: 0;
+.player-bar {
+  position: fixed;
   left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--player-h);
+  z-index: 30;
   display: flex;
   align-items: center;
-  z-index: 20;
-  padding: 10px;
+  padding: 6px 12px;
+  backdrop-filter: blur(8px);
+  background: color-mix(in srgb, #000 55%, transparent);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.reproductor {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .content {
+    padding-left: 16px;
+    padding-top: calc(var(--header-h) + 16px);
+  }
+  .music-card img {
+    width: 160px;
+    height: 160px;
+    margin-left: 0;
+  }
 }

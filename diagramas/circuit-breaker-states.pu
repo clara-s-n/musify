@@ -1,0 +1,59 @@
+@startuml circuit-breaker-states
+!theme plain
+title Circuit Breaker - Diagrama de Estados
+
+[*] --> CLOSED
+
+state CLOSED {
+  CLOSED : Funcionamiento normal
+  CLOSED : Monitorea tasa de fallos
+  CLOSED : Ventana deslizante: 10 requests
+}
+
+state OPEN {
+  OPEN : Circuito abierto
+  OPEN : Rechaza requests inmediatamente
+  OPEN : Llama fallback sin intentar servicio
+  OPEN : Timer: waitDurationInOpenState (10s)
+}
+
+state HALF_OPEN {
+  HALF_OPEN : Circuito semi-abierto
+  HALF_OPEN : Permite requests de prueba
+  HALF_OPEN : Evalúa si servicio se recuperó
+}
+
+CLOSED --> OPEN : Tasa de fallos ≥ 50%\n(failureRateThreshold)
+OPEN --> HALF_OPEN : Después de 10s\n(waitDurationInOpenState)
+HALF_OPEN --> CLOSED : Request exitoso\n(servicio recuperado)
+HALF_OPEN --> OPEN : Request falla\n(servicio aún caído)
+CLOSED --> CLOSED : Request exitoso
+
+note right of CLOSED
+  **Configuración:**
+  slidingWindowSize: 10
+  failureRateThreshold: 50%
+  
+  **Ejemplo:**
+  6 fallos de 10 requests
+  = 60% > 50%
+  → Abre circuito
+end note
+
+note right of OPEN
+  **Beneficio:**
+  Respuesta inmediata (~50ms)
+  vs esperar timeout (~2s)
+  
+  Protege recursos del sistema
+  y servicio downstream
+end note
+
+note bottom of HALF_OPEN
+  **Self-healing:**
+  Sistema intenta automáticamente
+  cerrar el circuito después
+  del período de espera
+end note
+
+@enduml

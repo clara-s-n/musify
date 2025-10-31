@@ -1,0 +1,155 @@
+@startuml external-config-component
+!theme plain
+title External Configuration Store - Diagrama de Componentes
+
+package "Configuration Sources" {
+  [.env File] as EnvFile
+  [Environment\nVariables] as EnvVars
+  [docker-compose.yaml] as DockerCompose
+  
+  note right of EnvFile
+    Archivo en repo root:
+    - JWT_SECRET=your-secret-key
+    - SPOTIFY_CLIENT_ID=...
+    - SPOTIFY_CLIENT_SECRET=...
+    - DB_HOST=postgres
+    - DB_PORT=5432
+    - DB_NAME=musify
+    - DB_USER=musify
+    - DB_PASSWORD=musify
+  end note
+}
+
+package "Docker Runtime" {
+  component "Docker\nCompose" as DCRuntime
+  
+  note right of DCRuntime
+    Lee .env file
+    Inyecta variables
+    en contenedores
+  end note
+}
+
+package "Backend Container (app-1 / app-2)" {
+  component "Spring Boot\nApplication" as SpringApp
+  component "application.yaml" as AppYaml
+  
+  [JWT\nConfiguration] as JWTConfig
+  [Spotify\nConfiguration] as SpotifyConfig
+  [Database\nConfiguration] as DBConfig
+  [Resilience4j\nConfiguration] as ResilienceConfig
+  [Cache\nConfiguration] as CacheConfig
+  [Async\nConfiguration] as AsyncConfig
+  
+  note right of AppYaml
+    spring:
+      datasource:
+        url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:musify}
+        username: ${DB_USER:musify}
+        password: ${DB_PASSWORD:musify}
+    
+    jwt:
+      secret: ${JWT_SECRET:default-secret}
+      expiration: ${JWT_EXPIRATION:86400000}
+    
+    spotify:
+      client:
+        id: ${SPOTIFY_CLIENT_ID}
+        secret: ${SPOTIFY_CLIENT_SECRET}
+    
+    resilience4j:
+      retry:
+        instances:
+          streamSource:
+            maxAttempts: 3
+            waitDuration: 200ms
+    
+    spring.cache:
+      cache-names:
+        - randomTracks
+        - searchTracks
+        - trackPlayback
+  end note
+  
+  SpringApp --> AppYaml: Read config
+  
+  AppYaml ..> JWTConfig: ${JWT_SECRET}
+  AppYaml ..> SpotifyConfig: ${SPOTIFY_CLIENT_ID}\n${SPOTIFY_CLIENT_SECRET}
+  AppYaml ..> DBConfig: ${DB_HOST}\n${DB_PORT}\n${DB_NAME}\n${DB_USER}\n${DB_PASSWORD}
+  AppYaml ..> ResilienceConfig: Static config
+  AppYaml ..> CacheConfig: Static config
+  AppYaml ..> AsyncConfig: Static config
+}
+
+package "External Systems" {
+  database "PostgreSQL" as DB
+  cloud "Spotify API" as SpotifyAPI
+}
+
+DockerCompose --> EnvFile: Load
+DockerCompose --> EnvVars: Inject
+EnvVars --> DCRuntime: Runtime values
+
+DCRuntime --> SpringApp: Inject environment\nvariables
+
+SpringApp --> DB: Connect using\n${DB_*} vars
+SpringApp --> SpotifyAPI: Auth using\n${SPOTIFY_*} vars
+
+package "Benefits" {
+  note as N1
+    **Ventajas del External Configuration Store:**
+    
+    1. **Separación de código y configuración**
+       - Código no contiene secrets
+       - .env en .gitignore
+       - Misma imagen, diferentes configs
+    
+    2. **Flexibilidad de despliegue**
+       - Dev: .env local
+       - Test: variables CI/CD
+       - Prod: Secrets Manager
+    
+    3. **Configuración por entorno**
+       - Dev: DB local
+       - Test: DB contenedor
+       - Prod: DB gestionada (RDS, etc)
+    
+    4. **Cambios sin rebuild**
+       - Modificar .env
+       - docker-compose restart
+       - Sin recompilar código
+    
+    5. **Valores por defecto seguros**
+       - ${VAR:default} en YAML
+       - Funciona sin .env (dev local)
+       - Documentación de configuración
+  end note
+}
+
+package "Configuration Hierarchy" {
+  note as N2
+    **Orden de precedencia (mayor a menor):**
+    
+    1. **Environment variables** (runtime)
+       Inyectadas por docker-compose
+       o definidas en shell
+    
+    2. **application.yaml placeholders**
+       ${VAR:default}
+       Lee de environment
+    
+    3. **Default values**
+       Fallback si no existe variable
+    
+    **Ejemplo:**
+    spring.datasource.url: jdbc:postgresql://
+      ${DB_HOST:localhost}:
+      ${DB_PORT:5432}/
+      ${DB_NAME:musify}
+    
+    Sin .env → localhost:5432/musify
+    Con .env → postgres:5432/musify (Docker)
+  end note
+}
+
+@enduml

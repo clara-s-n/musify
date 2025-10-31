@@ -5,7 +5,7 @@
   </div>
   <div class="cards-container">
     @for (results of searchResults; track results.id) {
-    <div class="music-card">
+    <div class="music-card" (click)="playTrack(results.name, results.artists)">
       <div class="mat-card-header">
         <div class="mat-card-title-group">
           <div>
@@ -22,4 +22,7 @@
     </div>
     }
   </div>
+  <footer class="player-bar">
+    <audio class="reproductor" [src]="audioURL" controls autoplay></audio>
+  </footer>
 </body>

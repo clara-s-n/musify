@@ -1,0 +1,104 @@
+@startuml cache-aside-class
+!theme plain
+title Cache-Aside - Diagrama de Clases
+
+class BackendApplication {
+  + {static} main(args: String[]): void
+}
+note right: @EnableCaching\n@EnableScheduling
+
+interface CacheManager {
+  + getCache(name: String): Cache
+  + getCacheNames(): Collection<String>
+}
+
+class SimpleCacheManager {
+  - caches: Map<String, Cache>
+  + getCache(name: String): Cache
+}
+
+interface Cache {
+  + get(key: Object): ValueWrapper
+  + put(key: Object, value: Object): void
+  + evict(key: Object): void
+  + clear(): void
+}
+
+class ConcurrentMapCache {
+  - store: ConcurrentHashMap
+  - name: String
+  + get(key: Object): ValueWrapper
+  + put(key: Object, value: Object): void
+}
+
+class SpotifyService {
+  - restTemplate: RestTemplate
+  - accessToken: String
+  --
+  + {method} getRandomTracks(limit: int): List<SpotifyTrackDto>
+  + {method} searchTracks(query: String, limit: int): List<SpotifyTrackDto>
+  + {method} getTrackPlayback(trackId: String): SpotifyPlaybackResponse
+  + {method} evictAllCaches(): void
+  --
+  - fetchAccessToken(): void
+  - convertToDto(track: SpotifyTrack): SpotifyTrackDto
+}
+
+note right of SpotifyService::getRandomTracks
+  @Cacheable(value = "randomTracks", key = "#limit")
+  @Retry(name = "spotifyApi")
+  @CircuitBreaker(name = "spotifyApi")
+end note
+
+note right of SpotifyService::searchTracks
+  @Cacheable(value = "searchTracks", 
+             key = "#query + '_' + #limit")
+  @Retry(name = "spotifyApi")
+  @CircuitBreaker(name = "spotifyApi")
+end note
+
+note right of SpotifyService::evictAllCaches
+  @CacheEvict(value = {"randomTracks", 
+                       "searchTracks", 
+                       "trackPlayback"}, 
+              allEntries = true)
+  @Scheduled(fixedRate = 600000)
+  
+  Ejecuta cada 10 minutos
+end note
+
+class SpotifyTrackDto {
+  + id: String
+  + name: String
+  + artists: String
+  + album: String
+  + imageUrl: String
+  + previewUrl: String
+}
+
+BackendApplication ..> CacheManager : configures
+CacheManager <|.. SimpleCacheManager : implements
+SimpleCacheManager --> Cache : manages
+Cache <|.. ConcurrentMapCache : implements
+SpotifyService --> CacheManager : uses
+SpotifyService ..> SpotifyTrackDto : returns
+
+note bottom of ConcurrentMapCache
+  **Cache Storage:**
+  Key format examples:
+  - "randomTracks::5"
+  - "searchTracks::rock_10"
+  - "trackPlayback::T123"
+  
+  Thread-safe con ConcurrentHashMap
+end note
+
+note top of BackendApplication
+  **Configuración en application.yaml:**
+  spring:
+    cache:
+      type: simple
+      cache-names: randomTracks,searchTracks,trackPlayback
+end note
+
+@enduml

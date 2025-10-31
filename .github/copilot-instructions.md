@@ -15,7 +15,7 @@ Backend is a Spring Boot monolith (packages: `auth`, `catalog`, `playback`, `spo
 - Start everything: `docker compose up --build` (repo root)
 - Backend only (dev): `./backend/mvnw spring-boot:run` (from repo root)
 - Frontend dev: `cd frontend/MusifyFront && npm start`
-- Run demo scripts: `./scripts/demo_retries.sh`, `./scripts/demo_replication.sh`, `./scripts/demo_security.sh`, `./scripts/demo_health.sh`
+- Run demo scripts: `./scripts/demo_retries.sh`, `./scripts/demo_replication.sh`, `./scripts/demo_security.sh`, `./scripts/demo_performance.sh`, `./scripts/demo_health.sh`
 
 ## Implemented Architecture Patterns (Assignment Requirements)
 
@@ -28,7 +28,8 @@ Backend is a Spring Boot monolith (packages: `auth`, `catalog`, `playback`, `spo
 
 ### Performance Patterns (grupo 2)
 
-_(Not yet implemented — opportunity to add caching or async patterns if required)_
+1. **Cache-Aside** — `@Cacheable` annotations in `SpotifyService` for caching search results and track data. Config: `application.yaml` → `spring.cache`. Cache names: `randomTracks`, `searchTracks`, `trackPlayback`. Auto-eviction every 10 minutes via `@CacheEvict` + `@Scheduled`.
+2. **Asynchronous Request-Reply** — `CompletableFuture<>` in `PlaybackController` for async processing. Config: `AsyncConfig` with `ThreadPoolTaskExecutor` (5 core threads, 10 max, 100 queue capacity). Methods like `start()` and `resume()` return `CompletableFuture<ResponseEntity<>>`.
 
 **TODO**: Implement actual music playback:
 
@@ -51,11 +52,13 @@ _(Not yet implemented — opportunity to add caching or async patterns if requir
 ## Patterns and Conventions (project-specific)
 
 - **Resilience**: Resilience4j is used heavily. Look for annotations: `@Retry`, `@CircuitBreaker(fallbackMethod=...)`, `@TimeLimiter`, `@RateLimiter`. Example: `PlaybackService.startPlayback` and its `fallbackUrl` method. Also in `SpotifyService` for external API calls.
+- **Caching**: Spring Cache for performance optimization. `@Cacheable` in `SpotifyService` methods caches search results. `@CacheEvict` scheduled task refreshes cache every 10 minutes. Cache names configured in `application.yaml`.
+- **Async processing**: `@EnableAsync` in `BackendApplication`. `AsyncConfig` defines thread pool. Controllers return `CompletableFuture<>` for non-blocking operations.
 - **External dependency simulation**: `flaky-service/server.js` intentionally fails (40% timeout, 20% error, 40% success) to demonstrate resilience patterns. Used by `StreamClient` in playback package.
 - **Validation & security**: DTOs use Bean Validation (`@NotBlank`, `@Email`) in `LoginRequest` and other DTOs. Login rate-limiting applied via Resilience4j. JWT handling in `auth/` package (`JwtTokenProvider`, `JwtAuthFilter`).
 - **Configuration**: `backend/src/main/resources/application.yaml` controls resilience settings, database, JWT, Spotify API credentials. TLS keystore (`musify.p12`) in resources — be careful when modifying.
 - **Orchestration**: `docker-compose.yaml` creates two backend replicas behind NGINX; changes to load balancing or health checks should be mirrored in `frontend/MusifyFront/ops/nginx.conf`.
-- **Testing/Demos**: `scripts/` directory contains shell scripts demonstrating each pattern (retries, replication, security, health). These scripts are used to validate pattern implementation and are mentioned in assignment deliverables.
+- **Testing/Demos**: `scripts/` directory contains shell scripts demonstrating each pattern (retries, replication, security, performance, health). These scripts are used to validate pattern implementation and are mentioned in assignment deliverables.
 
 ## Integration Pointers (where code links together)
 

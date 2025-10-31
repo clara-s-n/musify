@@ -1,18 +1,29 @@
-<body>
-  <div class="header-top">
+<body class="page">
+  <header class="header-top">
     <app-logo></app-logo>
     <search-bar (searchResults)="searchHome($event)"></search-bar>
-  </div>
+  </header>
 
-  <div class="row">
-    @for (tracks of randomSongs; track tracks.id) {
-    <mat-card class="music-card">
-      <img mat-card-image src="{{ tracks.imageUrl }}" (click)="playTrack(tracks.id)" />
-      <mat-card-content>
-        <b>{{ tracks.name }}</b>
-        <p>Canción - {{ tracks.artists }}</p>
-      </mat-card-content>
-    </mat-card>
-    }
-  </div>
+  <main class="content">
+    <div class="row">
+      @for (tracks of randomSongs; track tracks.id) {
+      <mat-card class="music-card">
+        <img
+          mat-card-image
+          [src]="tracks.imageUrl"
+          (click)="playTrack(tracks.name, tracks.artists)"
+          alt="{{ tracks.name }}"
+        />
+        <mat-card-content>
+          <b>{{ tracks.name }}</b>
+          <p>Canción - {{ tracks.artists }}</p>
+        </mat-card-content>
+      </mat-card>
+      }
+    </div>
+  </main>
+
+  <footer class="player-bar">
+    <audio class="reproductor" [src]="audioURL" controls autoplay></audio>
+  </footer>
 </body>
