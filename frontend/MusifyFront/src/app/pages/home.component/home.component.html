@@ -5,25 +5,69 @@
   </header>
 
   <main class="content">
-    <div class="row">
-      @for (tracks of randomSongs; track tracks.id) {
-      <mat-card class="music-card">
-        <img
-          mat-card-image
-          [src]="tracks.imageUrl"
-          (click)="playTrack(tracks.name, tracks.artists)"
-          alt="{{ tracks.name }}"
-        />
-        <mat-card-content>
-          <b>{{ tracks.name }}</b>
-          <p>Canción - {{ tracks.artists }}</p>
-        </mat-card-content>
-      </mat-card>
-      }
-    </div>
+    @if (errorMessage) {
+    <div class="alert error">{{ errorMessage }}</div>
+    }
+
+    <section class="catalog">
+      <h2>Canciones destacadas</h2>
+      <div class="row">
+        @for (track of tracks; track track.id) {
+        <mat-card class="music-card" (click)="startPlayback(track)">
+          <img
+            mat-card-image
+            [src]="track.coverUrl || 'assets/images/logo.jpg'"
+            alt="{{ track.title }}"
+          />
+          <mat-card-content>
+            <b>{{ track.title }}</b>
+            <p>{{ track.artist }}</p>
+          </mat-card-content>
+        </mat-card>
+        }
+      </div>
+    </section>
+
+    @if (playbackSession) {
+    <section class="player-status">
+      <div class="current-track">
+        <h3>{{ playbackSession?.currentTrack?.title ?? 'Reproducción en curso' }}</h3>
+        <p>{{ playbackSession?.currentTrack?.artist ?? 'Artista desconocido' }}</p>
+        <small>Anterior: {{ previousTrackLabel }}</small>
+        <small>Próxima: {{ nextTrackLabel }}</small>
+      </div>
+      <div class="player-controls">
+        <button type="button" (click)="skipToPrevious()" [disabled]="!playbackSession?.previousTrack">
+          Anterior
+        </button>
+        <button type="button" (click)="pausePlayback()">Pausa</button>
+        <button type="button" (click)="resumePlayback()">Reanudar</button>
+        <button type="button" (click)="stopPlayback()">Detener</button>
+        <button type="button" (click)="skipToNext()" [disabled]="!playbackSession?.nextTrack">
+          Siguiente
+        </button>
+      </div>
+    </section>
+    }
+
+    @if (playbackSession?.recommendations?.length) {
+    <section class="recommendations">
+      <h2>Recomendaciones</h2>
+      <div class="recommendation-list">
+        @for (recommendation of playbackSession?.recommendations; track recommendation.id) {
+        <button type="button" class="recommendation-item" (click)="playRecommended(recommendation)">
+          <span class="title">{{ recommendation.title }}</span>
+          <span class="artist">{{ recommendation.artist }}</span>
+        </button>
+        }
+      </div>
+    </section>
+    }
   </main>
 
   <footer class="player-bar">
-    <audio class="reproductor" [src]="audioURL" controls autoplay></audio>
+    @if (audioUrl) {
+    <audio class="reproductor" [src]="audioUrl" controls autoplay></audio>
+    }
   </footer>
 </body>

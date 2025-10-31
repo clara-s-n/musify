@@ -46,6 +46,25 @@ body.page {
   padding-bottom: calc(var(--player-h) + 24px);
 }
 
+.catalog h2,
+.recommendations h2 {
+  margin: 0 0 16px 0;
+  color: white;
+  font-size: 1.6rem;
+}
+
+.alert {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 24px;
+  color: #0b0b0b;
+  background: #ffd6d6;
+}
+
+.alert.error {
+  border: 1px solid #ff8a8a;
+}
+
 .row {
   display: flex;
   flex-wrap: wrap;
@@ -83,6 +102,84 @@ body.page {
   color: #bbb;
 }
 
+.player-status {
+  margin-top: 32px;
+  padding: 16px;
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+  background: color-mix(in srgb, rgba(255, 255, 255, 0.12) 40%, transparent);
+  color: white;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.player-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.player-controls button {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+  transition: background-color 0.2s ease;
+}
+
+.player-controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.player-controls button:not(:disabled):hover {
+  background-color: rgba(255, 255, 255, 0.25);
+}
+
+.recommendations {
+  margin-top: 32px;
+  color: white;
+}
+
+.recommendation-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.recommendation-item {
+  flex: 1 1 220px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.recommendation-item:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.recommendation-item .title {
+  font-weight: 600;
+}
+
+.recommendation-item .artist {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
 .player-bar {
   position: fixed;
   left: 0;
@@ -110,5 +207,10 @@ body.page {
     width: 160px;
     height: 160px;
     margin-left: 0;
+  }
+
+  .player-controls {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 }

@@ -1,7 +1,7 @@
 import { Component, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { SpotifyService } from '../../services/spotify.service';
-import { SpotifyTrack } from '../../models/spotify-track-model';
+import { CatalogService } from '../../services/catalog.service';
+import { CatalogTrack } from '../../models/catalog-track.model';
 import { Router } from '@angular/router';
 
 @Component({
@@ -11,12 +11,12 @@ import { Router } from '@angular/router';
   styleUrl: './search-bar.component.css',
 })
 export class SearchBarComponent {
-  private spotifyService = inject(SpotifyService);
+  private catalogService = inject(CatalogService);
   searchQuery: string = '';
   private router = inject(Router);
-  searchResults = output<SpotifyTrack[]>();
+  searchResults = output<CatalogTrack[]>();
   searchSong() {
-    this.spotifyService.searchTracks(this.searchQuery, 15).subscribe((tracks) => {
+    this.catalogService.search(this.searchQuery).subscribe((tracks: CatalogTrack[]) => {
       this.searchResults.emit(tracks);
     });
   }

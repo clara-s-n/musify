@@ -3,26 +3,69 @@
     <app-logo></app-logo>
     <search-bar (searchResults)="onSearchResults($event)"></search-bar>
   </div>
+
+  @if (errorMessage) {
+  <div class="alert error">{{ errorMessage }}</div>
+  }
+
   <div class="cards-container">
-    @for (results of searchResults; track results.id) {
-    <div class="music-card" (click)="playTrack(results.name, results.artists)">
-      <div class="mat-card-header">
-        <div class="mat-card-title-group">
-          <div>
-            <div class="mat-card-title">
-              <b>{{ results.name }}</b>
-            </div>
-            <div class="mat-card-subtitle">
-              <p>{{ results.artists }}</p>
-            </div>
-          </div>
-          <img mat-card-sm-image src="{{ results.imageUrl }}" />
+    @if (searchResults?.length) {
+    @for (track of searchResults; track track.id) {
+    <div class="music-card" (click)="playTrack(track)">
+      <div class="card-header">
+        <img [src]="track.coverUrl || 'assets/images/logo.jpg'" alt="{{ track.title }}" />
+        <div class="details">
+          <strong>{{ track.title }}</strong>
+          <span>{{ track.artist }}</span>
         </div>
+      </div>
+      <div class="card-meta">
+        <span>{{ track.album }}</span>
+        <span *ngIf="track.releaseYear as year">{{ year }}</span>
       </div>
     </div>
     }
+    } @else {
+    <p class="no-results">No se encontraron resultados para la búsqueda.</p>
+    }
   </div>
+
+  @if (playbackSession) {
+  <section class="player-status">
+    <div class="current-track">
+      <h3>{{ playbackSession?.currentTrack?.title ?? 'Reproducción en curso' }}</h3>
+      <p>{{ playbackSession?.currentTrack?.artist ?? 'Artista desconocido' }}</p>
+    </div>
+    <div class="player-controls">
+      <button type="button" (click)="previous()" [disabled]="!playbackSession?.previousTrack">
+        Anterior
+      </button>
+      <button type="button" (click)="pause()">Pausa</button>
+      <button type="button" (click)="resume()">Reanudar</button>
+      <button type="button" (click)="next()" [disabled]="!playbackSession?.nextTrack">
+        Siguiente
+      </button>
+    </div>
+  </section>
+  }
+
+  @if (playbackSession?.recommendations?.length) {
+  <section class="recommendations">
+    <h2>Recomendaciones</h2>
+    <div class="recommendation-list">
+      @for (recommendation of playbackSession?.recommendations; track recommendation.id) {
+      <button type="button" class="recommendation-item" (click)="playTrack(recommendation)">
+        <span class="title">{{ recommendation.title }}</span>
+        <span class="artist">{{ recommendation.artist }}</span>
+      </button>
+      }
+    </div>
+  </section>
+  }
+
   <footer class="player-bar">
-    <audio class="reproductor" [src]="audioURL" controls autoplay></audio>
+    @if (audioUrl) {
+    <audio class="reproductor" [src]="audioUrl" controls autoplay></audio>
+    }
   </footer>
 </body>
