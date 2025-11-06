@@ -3,6 +3,6 @@
  */
 export const environment = {
   production: false,
-  apiBaseUrl: 'http://localhost:8080',  // Using HTTP and the port exposed by NGINX
+  apiBaseUrl: `http://${window.location.hostname}:8080`,  // Dynamically use the current hostname
   spotifyApiUrl: 'https://api.spotify.com/v1'
 };

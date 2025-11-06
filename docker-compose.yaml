@@ -7,7 +7,7 @@ services:
     image: tfu-backend:local
     container_name: backend-app-1
     ports:
-      - "8443:8443"
+      - "0.0.0.0:8443:8443"
     environment:
       SERVER_PORT: 8443
       JWT_SECRET: ${JWT_SECRET}
@@ -64,7 +64,7 @@ services:
       context: ./flaky-service
     container_name: flaky-service
     ports:
-      - "9090:9090" # expuesto solo para debug/demo
+      - "0.0.0.0:9090:9090" # expuesto solo para debug/demo
     restart: unless-stopped
     networks:
       - app-net
@@ -108,7 +108,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "0.0.0.0:5432:5432"
     volumes:
       - ./database/01-init.sql:/docker-entrypoint-initdb.d/1_init.sql
       - ./database/02-seed.sql:/docker-entrypoint-initdb.d/2_seed.sql

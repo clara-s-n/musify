@@ -24,10 +24,11 @@ public class WebConfig implements WebMvcConfigurer {
   @Override
   public void addCorsMappings(CorsRegistry registry) {
     registry.addMapping("/**")
-        .allowedOrigins(
-            "http://localhost:4200", // Angular dev server
-            "http://localhost:8080", // Angular app servida desde Spring Boot
-            "http://localhost" // Otros puertos locales
+        .allowedOriginPatterns(
+            "http://localhost:*", // Cualquier puerto localhost
+            "http://*:4200", // Angular dev server desde cualquier IP
+            "http://*:8080", // Angular app servida desde cualquier IP
+            "http://*" // Permitir cualquier IP (para desarrollo/demo)
         )
         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD")
         .allowedHeaders(
