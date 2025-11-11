@@ -1,94 +1,45 @@
-CREATE TABLE usuario (
+-- ============================================================================
+-- MUSIFY - ESTRUCTURA DE BASE DE DATOS OPTIMIZADA (Solo lo esencial)
+-- ============================================================================
+-- Este script contiene únicamente las tablas necesarias para la funcionalidad
+-- actual de la aplicación: autenticación de usuarios
+-- 
+-- Fecha de optimización: 2025-11-11
+-- Tablas eliminadas: usuario, artista, album, cancion, etiqueta, playlist,
+--                    historial y todas las tablas de relación
+-- ============================================================================
+
+-- Tabla para usuarios del sistema de autenticación
+-- Esta tabla gestiona los usuarios que pueden hacer login
+CREATE TABLE app_users (
     id SERIAL PRIMARY KEY,
-    nombre TEXT NOT NULL,
-    apellido TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    premium BOOLEAN DEFAULT FALSE
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(100) NOT NULL,  -- Passwords con prefijo {noop} para simplicidad
+    email VARCHAR(100) NOT NULL UNIQUE,
+    enabled BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE artista (
+-- Tabla para roles del sistema de autorización
+-- Maneja los permisos básicos (USER, ADMIN, PREMIUM, etc.)
+CREATE TABLE app_roles (
     id SERIAL PRIMARY KEY,
-    nombre TEXT NOT NULL,
-    apellido TEXT NOT NULL
-
+    username VARCHAR(50) NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_roles_username FOREIGN KEY (username) REFERENCES app_users(username) ON DELETE CASCADE,
+    CONSTRAINT unique_username_role UNIQUE (username, role)
 );
 
-CREATE TABLE album (
-    id SERIAL PRIMARY KEY,
-    tipo BOOLEAN, -- TRUE = single, FALSE = álbum normal
-    artista_id INTEGER NOT NULL REFERENCES artista(id)
-);
+-- Índices para optimizar consultas de autenticación
+CREATE INDEX idx_app_users_username ON app_users(username);
+CREATE INDEX idx_app_users_email ON app_users(email);
+CREATE INDEX idx_app_roles_username ON app_roles(username);
 
-CREATE TABLE cancion (
-    id SERIAL PRIMARY KEY,
-    nombre TEXT NOT NULL,
-    letra TEXT
-);
-
-CREATE TABLE etiqueta (
-    id SERIAL PRIMARY KEY,
-    tipo TEXT CHECK (tipo IN ('genero','animo')),
-    nombre TEXT NOT NULL,
-    descripcion TEXT
-);
-
-CREATE TABLE playlist (
-    id SERIAL PRIMARY KEY,
-    descripcion TEXT
-);
-
-CREATE TABLE historial (
-    id SERIAL PRIMARY KEY,
-    busqueda TEXT NOT NULL,
-    usuario_id INTEGER NOT NULL REFERENCES usuario(id)
-);
-
-
-CREATE TABLE cancion_etiqueta (
-    id SERIAL PRIMARY KEY,
-    cancion_id INTEGER NOT NULL REFERENCES cancion(id),
-    etiqueta_id INTEGER NOT NULL REFERENCES etiqueta(id)
-);
-
-CREATE TABLE album_etiqueta (
-    id SERIAL PRIMARY KEY,
-    album_id INTEGER NOT NULL REFERENCES album(id),
-    etiqueta_id INTEGER NOT NULL REFERENCES etiqueta(id)
-);
-
-CREATE TABLE playlist_etiqueta (
-    id SERIAL PRIMARY KEY,
-    playlist_id INTEGER NOT NULL REFERENCES playlist(id),
-    etiqueta_id INTEGER NOT NULL REFERENCES etiqueta(id)
-);
-
-CREATE TABLE usuario_etiqueta (
-    id SERIAL PRIMARY KEY,
-    usuario_id INTEGER NOT NULL REFERENCES usuario(id),
-    etiqueta_id INTEGER NOT NULL REFERENCES etiqueta(id)
-);
-
-CREATE TABLE usuario_likes (
-    id SERIAL PRIMARY KEY,
-    usuario_id INTEGER NOT NULL REFERENCES usuario(id),
-    cancion_id INTEGER NOT NULL REFERENCES cancion(id)
-);
-
-
-CREATE TABLE propietarios_playlist (
-    id SERIAL PRIMARY KEY,
-    playlist_id INTEGER NOT NULL REFERENCES playlist(id),
-    usuario_id INTEGER NOT NULL REFERENCES usuario(id)
-);
-
-CREATE TABLE playlist_canciones (
-    id SERIAL PRIMARY KEY,
-    playlist_id INTEGER NOT NULL REFERENCES playlist(id),
-    cancion_id INTEGER NOT NULL REFERENCES cancion(id)
-);
-
-CREATE TABLE album_canciones (
-    id SERIAL PRIMARY KEY,
-    album_id INTEGER NOT NULL REFERENCES album(id),
-    cancion_id INTEGER NOT NULL REFERENCES cancion(id)
-);
+-- ============================================================================
+-- NOTAS:
+-- - La aplicación ahora usa únicamente Spotify API para música
+-- - No se necesitan tablas de catálogo interno (canciones, artistas, álbumes)
+-- - No se necesitan tablas de reproducción (historial, playlists)
+-- - Solo mantenemos autenticación y autorización básica
+-- ============================================================================

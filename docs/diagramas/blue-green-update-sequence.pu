@@ -1,0 +1,288 @@
+@startuml blue-green-update-sequence
+!theme plain
+title Blue/Green Deployment - Secuencia de Actualización Zero-Downtime
+
+actor "DevOps" as DevOps
+participant "Docker Compose" as Docker
+participant "NGINX\nLoad Balancer" as NGINX
+participant "Backend\nReplica 1\n(backend-app-1)" as Backend1
+participant "Backend\nReplica 2\n(backend-app-2)" as Backend2
+participant "PostgreSQL" as DB
+participant "Users" as Users
+
+' Lifelines
+activate DevOps
+activate Docker
+activate NGINX
+activate Backend1
+activate Backend2
+activate DB
+activate Users
+
+== Estado Inicial: Ambas réplicas v1.0 ==
+
+note over Backend1, Backend2
+  Ambas réplicas ejecutando v1.0
+  NGINX distribuye tráfico 50/50
+end note
+
+Users -> NGINX: HTTP Requests
+activate NGINX
+
+NGINX -> Backend1: Forward 50%
+activate Backend1
+Backend1 --> NGINX: Response
+deactivate Backend1
+
+NGINX -> Backend2: Forward 50%
+activate Backend2
+Backend2 --> NGINX: Response
+deactivate Backend2
+
+NGINX --> Users: Response
+deactivate NGINX
+
+== Fase 1: Detener Réplica 1 (Blue) ==
+
+DevOps -> Docker: docker-compose stop backend-app-1
+activate Docker
+
+Docker -> Backend1: SIGTERM
+activate Backend1
+
+note right of Backend1
+  Graceful shutdown:
+  1. Stop accepting new requests
+  2. Complete in-flight requests
+  3. Close DB connections
+  4. Shutdown thread pools
+end note
+
+Backend1 -> Backend1: Complete\nin-flight requests
+Backend1 -> DB: Close connections
+Backend1 --> Docker: Container stopped
+deactivate Backend1
+
+Docker --> DevOps: backend-app-1 stopped
+deactivate Docker
+
+note over Backend1
+  Estado: DETENIDO
+  - No responde requests
+  - Health check FAIL
+  - NGINX auto-excluye
+end note
+
+== Tráfico redirigido 100% a Réplica 2 ==
+
+Users -> NGINX: HTTP Requests
+activate NGINX
+
+NGINX -> Backend1: Health check
+activate Backend1
+note right of Backend1: FAIL (container stopped)
+Backend1 --> NGINX: No response
+deactivate Backend1
+
+note right of NGINX
+  NGINX detecta fallo:
+  - max_fails=3
+  - fail_timeout=10s
+  - Excluye backend-app-1
+  - Route 100% a backend-app-2
+end note
+
+NGINX -> Backend2: Forward 100%
+activate Backend2
+Backend2 --> NGINX: Response
+deactivate Backend2
+
+NGINX --> Users: Response
+deactivate NGINX
+
+note over Users, Backend2
+  **Disponibilidad mantenida**
+  Usuarios no perciben interrupción
+  Réplica 2 maneja todo el tráfico
+end note
+
+== Fase 2: Actualizar y reiniciar Réplica 1 ==
+
+DevOps -> Docker: docker-compose build backend-app-1\n(nueva versión v2.0)
+activate Docker
+
+Docker -> Docker: Build new image\nmusify-backend:v2.0
+
+Docker --> DevOps: Image built
+deactivate Docker
+
+DevOps -> Docker: docker-compose up -d backend-app-1
+activate Docker
+
+Docker -> Backend1: Start container\nwith v2.0
+activate Backend1
+
+Backend1 -> Backend1: Initialize\nSpring Boot
+Backend1 -> DB: Open connections
+Backend1 -> Backend1: @PostConstruct\nfetchAccessToken()
+
+Backend1 --> Docker: Container ready
+deactivate Backend1
+
+Docker --> DevOps: backend-app-1 started
+deactivate Docker
+
+note over Backend1
+  Estado: ACTIVO (v2.0)
+  - Health check OK
+  - Accepting requests
+  - NGINX re-incluye
+end note
+
+== Tráfico distribuido nuevamente 50/50 ==
+
+Users -> NGINX: HTTP Requests
+activate NGINX
+
+NGINX -> Backend1: Health check
+activate Backend1
+Backend1 --> NGINX: 200 OK (v2.0)
+deactivate Backend1
+
+note right of NGINX
+  NGINX detecta Backend1 disponible:
+  - Health check PASS
+  - Re-añade a pool
+  - Distribuye tráfico 50/50
+end note
+
+NGINX -> Backend1: Forward 25%
+activate Backend1
+Backend1 --> NGINX: Response (v2.0)
+deactivate Backend1
+
+NGINX -> Backend2: Forward 75%\n(gradual migration)
+activate Backend2
+Backend2 --> NGINX: Response (v1.0)
+deactivate Backend2
+
+NGINX --> Users: Response
+deactivate NGINX
+
+== Fase 3: Validar Réplica 1 (v2.0) ==
+
+DevOps -> Backend1: Monitor logs\n& metrics
+activate Backend1
+
+note right of DevOps
+  Verificar:
+  - Sin errores en logs
+  - Response times OK
+  - No degradación
+  - Health check stable
+end note
+
+Backend1 --> DevOps: Health: UP\nNo errors
+deactivate Backend1
+
+alt Todo OK - Continuar actualización
+  DevOps -> DevOps: Proceed to\nupdate Replica 2
+else Error detectado - Rollback
+  DevOps -> Docker: docker-compose stop backend-app-1
+  DevOps -> Docker: docker tag musify-backend:v1.0 latest
+  DevOps -> Docker: docker-compose up -d backend-app-1
+  note right of DevOps
+    Rollback rápido:
+    - Stop v2.0
+    - Restore v1.0 image
+    - Restart Replica 1
+    - Ambas réplicas vuelven a v1.0
+  end note
+end
+
+== Fase 4: Actualizar Réplica 2 (mismo proceso) ==
+
+DevOps -> Docker: docker-compose stop backend-app-2
+activate Docker
+
+Docker -> Backend2: SIGTERM
+activate Backend2
+Backend2 -> Backend2: Graceful shutdown
+Backend2 --> Docker: Stopped
+deactivate Backend2
+
+Docker --> DevOps: backend-app-2 stopped
+deactivate Docker
+
+note over Backend2
+  Estado: DETENIDO
+  Backend1 (v2.0) maneja 100% tráfico
+end note
+
+DevOps -> Docker: docker-compose build backend-app-2\n(v2.0)
+activate Docker
+Docker --> DevOps: Image built
+deactivate Docker
+
+DevOps -> Docker: docker-compose up -d backend-app-2
+activate Docker
+
+Docker -> Backend2: Start v2.0
+activate Backend2
+Backend2 -> Backend2: Initialize
+Backend2 --> Docker: Ready
+deactivate Backend2
+
+Docker --> DevOps: backend-app-2 started
+deactivate Docker
+
+== Estado Final: Ambas réplicas v2.0 ==
+
+note over Backend1, Backend2
+  Actualización completa
+  Ambas réplicas ejecutando v2.0
+  Zero-downtime deployment exitoso
+end note
+
+Users -> NGINX: HTTP Requests
+activate NGINX
+
+NGINX -> Backend1: Forward 50%
+activate Backend1
+Backend1 --> NGINX: Response (v2.0)
+deactivate Backend1
+
+NGINX -> Backend2: Forward 50%
+activate Backend2
+Backend2 --> NGINX: Response (v2.0)
+deactivate Backend2
+
+NGINX --> Users: Response
+deactivate NGINX
+
+note bottom of DevOps
+  **Ventajas Blue/Green Deployment:**
+  
+  1. **Zero-downtime**: Siempre hay al menos 1 réplica activa
+  2. **Rollback rápido**: Volver a versión anterior en segundos
+  3. **Validación gradual**: Probar nueva versión con tráfico real
+  4. **Reducción de riesgo**: Fallo afecta solo 50% capacidad
+  5. **Flexibilidad**: Canary releases, A/B testing posibles
+  
+  **Requisitos:**
+  - Múltiples réplicas idénticas
+  - Load balancer con health checks
+  - Graceful shutdown en aplicación
+  - Database backward-compatible migrations
+end note
+
+' End lifelines
+deactivate DevOps
+deactivate Docker
+deactivate NGINX
+deactivate Backend1
+deactivate Backend2
+deactivate DB
+deactivate Users
+
+@enduml

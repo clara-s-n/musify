@@ -128,43 +128,7 @@ public class AuthController {
     }
   }
 
-  /**
-   * Endpoint para registro de nuevos usuarios.
-   * 
-   * @param req Datos de registro (username, email, password)
-   * @return Información del usuario registrado
-   */
-  @Operation(summary = "Registrar nuevo usuario", description = "Crea una nueva cuenta de usuario en el sistema")
-  @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
-      @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Usuario registrado correctamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = RegisterResponse.class))),
-      @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos de registro inválidos o email ya registrado", content = @Content(mediaType = "application/json")),
-      @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor", content = @Content(mediaType = "application/json"))
-  })
-  @PostMapping("/register")
-  public ResponseEntity<ApiResponse<RegisterResponse>> register(@Valid @RequestBody RegisterRequest req) {
-    try {
-      logger.debug("Intento de registro para: {}", req.email());
 
-      AppUser user = authService.register(req.username(), req.email(), req.password());
-
-      RegisterResponse response = new RegisterResponse(
-          user.getUsername(),
-          user.getEmail(),
-          "Usuario registrado correctamente");
-
-      logger.info("Registro exitoso para: {}", req.email());
-      return ResponseEntity.status(HttpStatus.CREATED)
-          .body(ApiResponse.success(response, "Usuario registrado correctamente"));
-    } catch (AuthenticationException e) {
-      logger.warn("Error de registro: {}", e.getMessage());
-      return ResponseEntity.badRequest()
-          .body(ApiResponse.error("Error de registro", e.getMessage()));
-    } catch (Exception e) {
-      logger.error("Error inesperado durante registro: {}", e.getMessage(), e);
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body(ApiResponse.error("Error al registrar usuario", e.getMessage()));
-    }
-  }
 }
 
 /**

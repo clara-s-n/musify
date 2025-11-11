@@ -1,312 +1,186 @@
-# Musify
+# 🎵 Musify - Aplicación Educacional de Streaming Musical
 
-## Descripción del Proyecto
+> **Proyecto Educacional** - Implementación de patrones arquitectónicos para disponibilidad, rendimiento y seguridad usando Spring Boot + Angular + Spotify API.
 
-Musify es una aplicación de demostración que implementa diversas tácticas de arquitectura para satisfacer requerimientos no funcionales relacionados con disponibilidad, rendimiento y seguridad. La aplicación simula un servicio de streaming de música, permitiendo buscar canciones, autenticarse y reproducir pistas.
+[![Arquitectura](https://img.shields.io/badge/Arquitectura-Microservicios-blue)](docs/arquitectura/)
+[![API](https://img.shields.io/badge/API-REST%20+%20JWT-green)](docs/api/)
+[![Base de Datos](https://img.shields.io/badge/DB-PostgreSQL-orange)](docs/database/)
+[![Frontend](https://img.shields.io/badge/Frontend-Angular-red)](frontend/)
+[![Demo](https://img.shields.io/badge/Demo-Scripts-purple)](docs/demos/)
 
-## Tácticas de Arquitectura Implementadas
+## 🎯 Descripción del Proyecto
 
-Este proyecto implementa la combinación: **"Replicación y re-intentos para disponibilidad y dos tácticas de la categoría resistir a ataques para seguridad"**
+**Musify** es una aplicación de demostración que implementa **patrones arquitectónicos clave** para satisfacer requerimientos no funcionales. La aplicación simula un servicio de streaming musical educacional, enfocado en demostrar:
 
-### 1. Tácticas para Disponibilidad
+- ✅ **Autenticación JWT segura**
+- ✅ **Integración con Spotify API**
+- ✅ **Patrones de disponibilidad** (Circuit Breaker, Retry, Replicación)
+- ✅ **Patrones de rendimiento** (Cache-Aside, Async Processing)
+- ✅ **Patrones de seguridad** (Rate Limiting, Gatekeeper)
+- ✅ **Monitoreo y health checks**
 
-#### Replicación
+## 🏗️ Arquitectura Optimizada
 
-- **Implementación**: Dos instancias replicadas del backend (`backend-app-1` y `backend-app-2`).
-- **Componentes clave**:
-  - Docker Compose para gestionar múltiples instancias
-  - NGINX como balanceador de carga
-- **Beneficio**: Alta disponibilidad incluso si una instancia falla.
+### **Stack Tecnológico**
+```
+📱 Frontend: Angular 17 + Material Design
+🔧 Backend:  Spring Boot 3 + JWT + Resilience4j
+🗄️ Database: PostgreSQL (2 tablas optimizadas)
+🎵 Music API: Spotify Web API (oficial)
+🐳 Deploy:   Docker Compose + NGINX
+📊 Monitor:  Spring Actuator + Health Checks
+```
 
-#### Re-intentos y Circuit Breaker
-
-- **Implementación**: Resilience4j para gestionar fallos del servicio de streaming.
-- **Componentes clave**:
-  - `@Retry`: Reintenta operaciones fallidas automáticamente
-  - `@CircuitBreaker`: Previene cascada de fallos
-  - `@TimeLimiter`: Establece tiempos de espera máximos
-  - Método de fallback para degradación elegante
-- **Beneficio**: Tolerancia a fallos transitorios y protección contra cascadas de fallos.
-
-#### Health Endpoint Monitoring
-
-- **Implementación**: Spring Boot Actuator para monitoreo de salud.
-- **Componentes clave**:
-  - Endpoint `/actuator/health` expuesto públicamente
-  - Métricas y estado del sistema
-- **Beneficio**: Visibilidad del estado del sistema y detección temprana de problemas.
-
-### 2. Tácticas para Rendimiento
-
-#### Cache-Aside
-
-- **Implementación**: Spring Cache para cachear resultados de búsqueda de Spotify.
-- **Componentes clave**:
-  - `@Cacheable` en métodos de búsqueda de `SpotifyService`
-  - `@CacheEvict` programado para refrescar caché cada 10 minutos
-  - Configuración de caché en `application.yaml`
-- **Beneficio**: Reducción de llamadas a APIs externas y mejora de tiempos de respuesta.
-
-#### Asynchronous Request-Reply
-
-- **Implementación**: Procesamiento asíncrono de operaciones de playback.
-- **Componentes clave**:
-  - `CompletableFuture<>` en `PlaybackController`
-  - `ThreadPoolTaskExecutor` configurado en `AsyncConfig`
-  - `@EnableAsync` para habilitar operaciones asíncronas
-- **Beneficio**: Mejor utilización de recursos y capacidad de manejar múltiples peticiones concurrentemente.
-
-### 3. Tácticas para Seguridad (Resistir Ataques)
-
-#### Validación de Entrada
-
-- **Implementación**: Validación de datos de usuario.
-- **Componentes clave**:
-  - Anotaciones `@Email` y `@NotBlank`
-  - Validaciones de formato
-- **Beneficio**: Prevención de inyecciones y ataques de entrada maliciosa.
-
-#### Rate Limiting
-
-- **Implementación**: Limitación de tasa en endpoint de login.
-- **Componentes clave**:
-  - `@RateLimiter` de Resilience4j
-  - Configuración de límites por periodo de tiempo
-- **Beneficio**: Protección contra ataques de fuerza bruta y denegación de servicio.
-
-#### Gatekeeper y Gateway Offloading
-
-- **Implementación**: NGINX como gateway que offloads funcionalidades.
-- **Componentes clave**:
-  - NGINX como reverse proxy y load balancer
-  - Manejo de TLS/SSL en el gateway
-  - Reintentos automáticos (`proxy_next_upstream`)
-  - Health checks pasivos
-- **Beneficio**: Separación de responsabilidades, protección del backend, y mejora de seguridad.
-
-#### Federated Identity (parcial)
-
-- **Implementación**: JWT-based authentication y OAuth2 con Spotify.
-- **Componentes clave**:
-  - `JwtTokenProvider` para generación y validación de tokens
-  - Integración OAuth2 con Spotify API (client credentials flow)
-- **Beneficio**: Autenticación distribuida y integración con proveedores externos.
-
-### 4. Tácticas de Facilidad de Modificación y Despliegue
-
-#### External Configuration Store
-
-- **Implementación**: Externalización de configuración mediante variables de entorno.
-- **Componentes clave**:
-  - Variables de entorno en `docker-compose.yaml`
-  - Archivo `.env` para configuración local
-  - `application.yaml` con placeholders `${VAR:default}`
-- **Beneficio**: Configuración sin recompilación y despliegue en múltiples ambientes.
-
-#### Blue/Green Deployment (simulado)
-
-- **Implementación**: Dos réplicas del backend permiten actualizaciones sin downtime.
-- **Componentes clave**:
-  - `backend-app-1` y `backend-app-2` en Docker Compose
-  - NGINX load balancer con health checks
-- **Beneficio**: Despliegues sin downtime mediante actualización secuencial de réplicas.
-
-## Estructura del Proyecto
-
+### **Estructura del Proyecto**
 ```
 musify/
-├── backend/                     # Aplicación Spring Boot
-│   ├── src/                     # Código fuente
-│   │   └── main/
-│   │       ├── java/com/tfu/backend/
-│   │       │   ├── auth/        # Autenticación y seguridad
-│   │       │   ├── catalog/     # Catálogo de canciones
-│   │       │   ├── config/      # Configuración de seguridad
-│   │       │   └── playback/    # Reproducción de pistas
-│   │       └── resources/       # Configuraciones
-│   ├── Dockerfile               # Construcción de imagen backend
-│   └── pom.xml                  # Dependencias Maven
-├── flaky-service/               # Servicio inestable (simulación)
-│   ├── Dockerfile
-│   ├── package.json
-│   └── server.js                # Simulación de fallos aleatorios
-├── ops/
-│   └── nginx.conf               # Configuración de balanceo y reintentos
-├── scripts/                     # Scripts de demostración
-│   ├── demo_health.sh
-│   ├── demo_replication.sh
-│   ├── demo_retries.sh
-│   └── demo_security.sh
-└── docker-compose.yaml          # Orquestación de servicios
+├── 📄 README.md                 # Este archivo
+├── 🐳 docker-compose.yaml       # Orquestación de servicios
+├── 📁 backend/                  # API Spring Boot
+├── 📁 frontend/MusifyFront/     # Aplicación Angular
+├── 📁 database/                 # Scripts SQL optimizados
+├── 📁 scripts/                  # Scripts de demostración
+├── 📁 flaky-service/           # Servicio simulado (tolerancia a fallos)
+├── 📁 diagramas/               # Diagramas PlantUML
+└── 📁 docs/                    # 📚 Documentación organizada
+    ├── 📁 api/                 # Guías de API y testing
+    ├── 📁 arquitectura/        # Patrones y diagramas
+    ├── 📁 database/            # Documentación de BD
+    ├── 📁 demos/               # Guías de demostración
+    ├── 📁 deployment/          # Configuración y despliegue
+    ├── 📁 patrones/            # Documentación de patrones
+    ├── 📁 scripts/             # Documentación de scripts
+    └── 📁 spotify/             # Integración Spotify API
 ```
 
-## Requisitos
+## 🚀 Inicio Rápido (3 pasos)
 
-- Docker y Docker Compose
-- Bash
+### 1️⃣ **Clonar y Configurar**
+```bash
+git clone https://github.com/clara-s-n/musify.git
+cd musify
+cp .env.example .env  # Configurar variables de entorno
+```
 
-## Cómo Ejecutar
+### 2️⃣ **Iniciar Servicios**
+```bash
+docker compose up --build
+```
 
-1. Clonar el repositorio:
+### 3️⃣ **Acceder a la Aplicación**
+- 🌐 **Frontend**: http://localhost:4200
+- 🔧 **API Backend**: http://localhost:8080  
+- 📊 **Swagger UI**: http://localhost:8080/swagger-ui.html
+- ❤️ **Health Check**: http://localhost:8080/actuator/health
 
-   ```bash
-   git clone https://github.com/clara-s-n/musify.git
-   cd musify
-   ```
+## 🔐 Credenciales de Prueba
 
-2. Iniciar los servicios:
+| Email | Password | Roles | Propósito |
+|-------|----------|-------|-----------|
+| `user@demo.com` | `password` | USER | Demo básico |
+| `admin@demo.com` | `admin` | USER, ADMIN | Administración |
+| `estudiante@musify.com` | `estudiante123` | USER | Contexto educacional |
+| `profesor@musify.com` | `profesor456` | USER, EDUCATOR | Contexto educacional |
+| `premium@musify.com` | `premium789` | USER, PREMIUM | Testing premium |
 
-   ```bash
-   docker compose up --build
-   ```
+> 📖 **Más usuarios disponibles en**: [`docs/database/README_DATABASE_OPTIMIZED.md`](docs/database/README_DATABASE_OPTIMIZED.md)
 
-3. Esperar a que todos los servicios estén ejecutándose. La aplicación estará disponible en http://localhost:8080
+## 🛠️ Patrones Arquitectónicos Implementados
 
-## Demostraciones de Patrones
+### 🔄 **Disponibilidad**
+- **Replicación**: 2 instancias backend + NGINX load balancer
+- **Circuit Breaker**: Resilience4j para tolerancia a fallos
+- **Retry Pattern**: Reintentos automáticos con backoff exponencial  
+- **Health Monitoring**: Endpoints de salud con Spring Actuator
 
-Este proyecto incluye scripts completos para demostrar cómo cada patrón logra los atributos de calidad correspondientes. Los scripts son ejecutables, automatizados y proporcionan métricas cuantificables.
+### ⚡ **Rendimiento**
+- **Cache-Aside**: Spring Cache para resultados de Spotify API
+- **Async Processing**: CompletableFuture para operaciones no bloqueantes
 
-### Script Maestro (Recomendado)
+### 🔒 **Seguridad**
+- **Rate Limiting**: 5 intentos de login por minuto (Resilience4j)
+- **JWT Authentication**: Tokens seguros con expiración configurable
+- **Gatekeeper**: NGINX como proxy reverso con TLS
+
+### 📊 **Monitoreo**
+- **Health Checks**: `/actuator/health`, `/actuator/metrics`
+- **API Documentation**: OpenAPI 3 + Swagger UI
+- **Logging**: Structured logging with SLF4J
+
+## 🎮 Demostraciones Disponibles
 
 ```bash
-cd scripts
-./run_all_demos.sh
+# Ejecutar todas las demos de patrones
+./scripts/run_all_demos.sh
+
+# Demos individuales
+./scripts/demo_retries.sh        # Circuit Breaker + Retry
+./scripts/demo_replication.sh    # Load Balancing + Replicación  
+./scripts/demo_security.sh       # Rate Limiting + JWT
+./scripts/demo_performance.sh    # Cache + Async Processing
+./scripts/demo_health.sh         # Health Monitoring
 ```
 
-El script maestro `run_all_demos.sh` proporciona:
+> 📖 **Guía completa**: [`docs/demos/GUIA_RAPIDA_DEMOS.md`](docs/demos/GUIA_RAPIDA_DEMOS.md)
 
-- ✅ Menú interactivo para seleccionar demos
-- ✅ Opción para ejecutar todas las demos automáticamente
-- ✅ Verificación de requisitos previos
-- ✅ Output coloreado con métricas detalladas
-- ✅ Resumen final de todos los patrones
+## 🏫 Propósito Educacional
 
-### Demos Individuales
+Este proyecto es ideal para aprender:
 
-#### 1. Disponibilidad: Retry + Circuit Breaker + Fallback
+- ✅ **Arquitectura de Microservicios** con Spring Boot
+- ✅ **Patrones de Resiliencia** (Circuit Breaker, Retry, Bulkhead)
+- ✅ **Seguridad en APIs** (JWT, Rate Limiting, CORS)
+- ✅ **Integración con APIs externas** (Spotify Web API)
+- ✅ **Containerización** con Docker y Docker Compose
+- ✅ **Frontend-Backend separation** con Angular + REST API
+- ✅ **Base de datos optimizada** (PostgreSQL con solo lo esencial)
+- ✅ **Documentación técnica** estructurada
 
-```bash
-./scripts/demo_retries.sh
-```
+## 📚 Documentación
 
-**Demuestra:**
+### **🔍 Para Desarrolladores**
+- [`docs/api/Musify_API_Testing_Guide.md`](docs/api/Musify_API_Testing_Guide.md) - Testing con Postman/curl
+- [`docs/database/README_DATABASE_OPTIMIZED.md`](docs/database/README_DATABASE_OPTIMIZED.md) - Estructura de BD
+- [`docs/spotify/Spotify_API_Integration_Guide.md`](docs/spotify/Spotify_API_Integration_Guide.md) - Integración Spotify
 
-- Reintentos automáticos (3 intentos, 200ms, exponential backoff)
-- Circuit Breaker (CLOSED/OPEN/HALF_OPEN states)
-- Degradación elegante con fallback URLs
-- Métricas: Tasa de éxito antes/después de aplicar patrones
+### **🏗️ Para Arquitectos**
+- [`docs/patrones/PATRONES_IMPLEMENTADOS.md`](docs/patrones/PATRONES_IMPLEMENTADOS.md) - Patrones detallados
+- [`docs/arquitectura/CAMBIOS_DIAGRAMAS.md`](docs/arquitectura/CAMBIOS_DIAGRAMAS.md) - Diagramas UML
 
-**Atributos de calidad:** Disponibilidad, Resiliencia, Tolerancia a fallos
+### **🚀 Para DevOps**
+- [`docs/deployment/EXTERNAL_ACCESS_SUMMARY.md`](docs/deployment/EXTERNAL_ACCESS_SUMMARY.md) - Configuración de red
+- [`docs/scripts/SCRIPTS_IMPLEMENTACION.md`](docs/scripts/SCRIPTS_IMPLEMENTACION.md) - Scripts de demo
 
-#### 2. Disponibilidad: Circuit Breaker en Detalle
+## 📊 Métricas del Proyecto
 
-```bash
-./scripts/demo_circuit_breaker.sh
-```
+### **Backend Optimizado**
+- **Endpoints**: 11 (eliminados 24 huérfanos)
+- **Controladores**: 2 (AuthController + SpotifyController)
+- **Entidades JPA**: 2 (AppUser + AppRole)
+- **Patrones**: 8+ patrones arquitectónicos implementados
 
-**Demuestra:**
+### **Base de Datos Simplificada**
+- **Tablas**: 2 (eliminadas 11 innecesarias)
+- **Registros**: ~12 usuarios de prueba
+- **Reducción**: 94% menos datos, 90% menos tablas
 
-- Estados del Circuit Breaker (CLOSED → OPEN → HALF_OPEN)
-- Fail-fast cuando CB está abierto
-- Recuperación automática cuando servicio mejora
-- Configuración: 50% threshold, 10s wait, sliding window de 10
+### **Estructura del Frontend**
+- **Angular 20**: Componentes standalone + Signals
+- **Material Design**: UI consistente y moderna
+- **Servicios**: AuthService + SpotifyService (optimizados)
 
-**Atributos de calidad:** Disponibilidad, Resiliencia, Rendimiento
+## 🤝 Contribución
 
-#### 3. Seguridad: Validación + Rate Limiting + JWT
+Este es un proyecto educacional. Para contribuir:
 
-```bash
-./scripts/demo_security.sh
-```
+1. Fork del repositorio
+2. Crear branch para feature (`git checkout -b feature/mejora`)
+3. Commit cambios (`git commit -am 'Agregar mejora'`)
+4. Push al branch (`git push origin feature/mejora`)
+5. Crear Pull Request
 
-**Demuestra:**
+---
 
-- Validación de entrada (Bean Validation con @Email)
-- Rate limiting (5 intentos/minuto en login)
-- JWT authentication (token generation y validation)
-- Gatekeeper (NGINX como punto único de entrada)
-- Gateway offloading (TLS, retries, health checks)
+**🎓 Desarrollado como parte del programa académico de Análisis y Diseño de Aplicaciones II**
 
-**Atributos de calidad:** Seguridad, Resistencia a ataques, Confidencialidad
-
-#### 4. Rendimiento: Cache-Aside + Async Request-Reply
-
-```bash
-./scripts/demo_performance.sh
-```
-
-**Demuestra:**
-
-- Cache-Aside: Comparación cache miss vs cache hit (50x más rápido)
-- Async: Procesamiento concurrente vs secuencial (3x más rápido)
-- Thread pool configuration (5 core, 10 max, 100 queue)
-- Métricas: Latencia, throughput, speedup factor
-
-**Atributos de calidad:** Rendimiento, Escalabilidad, Eficiencia, Throughput
-
-#### 5. Disponibilidad: Health Monitoring + Observabilidad
-
-```bash
-./scripts/demo_health.sh
-```
-
-**Demuestra:**
-
-- Spring Boot Actuator health endpoints
-- Monitoreo de componentes (DB, disco, memoria)
-- OpenAPI/Swagger documentation
-- Integración con sistemas de monitoreo externos
-
-**Atributos de calidad:** Disponibilidad, Observabilidad, Mantenibilidad
-
-#### 6. Modificabilidad: Blue/Green Deployment + Replicación
-
-```bash
-./scripts/demo_replication.sh
-```
-
-**Demuestra:**
-
-- Alta disponibilidad con 2 réplicas del backend
-- Failover automático cuando réplica falla
-- Zero-downtime deployment (actualización sin interrumpir servicio)
-- Load balancing con NGINX
-- Health checks automáticos
-
-**Atributos de calidad:** Disponibilidad, Escalabilidad, Modificabilidad, Resiliencia
-
-### Ejecutar Todas las Demos
-
-```bash
-# Modo interactivo con menú
-cd scripts
-./run_all_demos.sh
-
-# Modo automático con pausas entre demos
-cd scripts
-./run_all_demos.sh <<< "A"
-
-# Modo rápido sin pausas
-cd scripts
-./run_all_demos.sh <<< "Q"
-```
-
-### Documentación de Scripts
-
-Para más detalles sobre los scripts de demostración, consulta:
-
-- [`scripts/README.md`](scripts/README.md) - Documentación completa de los scripts
-- Cada script incluye comentarios detallados y help text
-- Output coloreado con métricas cuantificables
-- Verificación automática de requisitos previos
-
-### Requisitos para Ejecutar Demos
-
-- Sistema Musify ejecutándose: `docker compose up --build`
-- `curl` instalado
-- `jq` instalado (para parsear JSON): `sudo apt-get install jq`
-- `docker` CLI accesible
-
-## Contribución
-
-Este proyecto fue creado como demostración para la materia "Análisis y Diseño de Aplicaciones II" y no está destinado para uso en producción.
+> Para más información sobre patrones específicos, consulta la documentación en [`docs/`](docs/)

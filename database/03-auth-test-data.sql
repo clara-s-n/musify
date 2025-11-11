@@ -1,25 +1,24 @@
--- Archivo 03-auth-test-data.sql
--- Datos adicionales de prueba para autenticación en Musify
+-- ============================================================================
+-- MUSIFY - DATOS DE PRUEBA ADICIONALES (Usuarios extendidos para desarrollo)
+-- ============================================================================
+-- Este archivo contiene usuarios adicionales que NO están en el seed principal
+-- Útil para pruebas extendidas, desarrollo y casos especiales
+-- 
+-- NOTA: Los usuarios básicos (estudiante, profesor, premium, test) ya están
+--       en 02-seed.sql, aquí solo agregamos usuarios especializados
+-- ============================================================================
 
--- Insertar usuarios adicionales para pruebas de login
+-- Usuarios adicionales para casos especiales de testing
 INSERT INTO app_users (username, password, email, enabled) VALUES
-  ('estudiante', '{noop}estudiante123', 'estudiante@musify.com', true),
-  ('profesor', '{noop}profesor456', 'profesor@musify.com', true),
-  ('premium', '{noop}premium789', 'premium@musify.com', true),
   ('soporte', '{noop}soporte2023', 'soporte@musify.com', true),
   ('desarrollador', '{noop}dev2023', 'dev@musify.com', true),
   ('juan.perez', '{noop}juanperez', 'juan.perez@musify.com', true),
   ('maria.lopez', '{noop}marialopez', 'maria.lopez@musify.com', true),
   ('carlos.rodriguez', '{noop}carlos2023', 'carlos.rodriguez@musify.com', true),
-  ('ana.martinez', '{noop}ana2023', 'ana.martinez@musify.com', true),
-  ('test', '{noop}test123', 'test@musify.com', true);
+  ('ana.martinez', '{noop}ana2023', 'ana.martinez@musify.com', true);
 
--- Asignar roles a los nuevos usuarios
+-- Roles para usuarios especializados
 INSERT INTO app_roles (username, role) VALUES
-  ('estudiante', 'USER'),
-  ('profesor', 'USER'),
-  ('premium', 'USER'),
-  ('premium', 'PREMIUM'),
   ('soporte', 'USER'),
   ('soporte', 'SUPPORT'),
   ('desarrollador', 'USER'),
@@ -28,5 +27,20 @@ INSERT INTO app_roles (username, role) VALUES
   ('juan.perez', 'USER'),
   ('maria.lopez', 'USER'),
   ('carlos.rodriguez', 'USER'),
-  ('ana.martinez', 'USER'),
-  ('test', 'USER');
+  ('ana.martinez', 'USER');
+
+-- ============================================================================
+-- USUARIOS ADICIONALES:
+-- 
+-- Soporte técnico:
+--   - soporte@musify.com / soporte2023 (USER, SUPPORT)
+-- 
+-- Desarrollo:
+--   - dev@musify.com / dev2023 (USER, ADMIN, DEVELOPER)
+-- 
+-- Usuarios individuales para testing:
+--   - juan.perez@musify.com / juanperez (USER)
+--   - maria.lopez@musify.com / marialopez (USER)  
+--   - carlos.rodriguez@musify.com / carlos2023 (USER)
+--   - ana.martinez@musify.com / ana2023 (USER)
+-- ============================================================================

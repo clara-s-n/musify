@@ -1,0 +1,170 @@
+@startuml cache-aside-sequence
+!theme plain
+title Patrón Cache-Aside - Diagrama de Secuencia
+
+actor Usuario
+participant "TrackController" as Controller
+participant "SpotifyService\n@Cacheable" as Service
+participant "Spring Cache\nManager" as Cache
+participant "Spotify API" as Spotify
+
+' Lifelines
+activate Usuario
+activate Controller
+activate Service
+activate Cache
+activate Spotify
+
+== Primera Request (Cache Miss) ==
+
+Usuario -> Controller: GET /tracks/spotify/search?query=rock&limit=5
+activate Controller
+
+Controller -> Service: searchTracks("rock", 5)
+activate Service
+
+Service -> Cache: get("searchTracks::rock_5")
+activate Cache
+
+note right of Cache
+  Cache vacío
+  Key no existe
+end note
+
+Cache --> Service: null (cache miss)
+deactivate Cache
+
+note right of Service
+  Cache miss
+  Debe consultar fuente
+end note
+
+Service -> Spotify: GET /v1/search?q=rock&type=track&limit=5
+activate Spotify
+note right of Spotify: Latencia: ~400ms
+Spotify --> Service: Track list (JSON)
+deactivate Spotify
+
+Service -> Cache: put("searchTracks::rock_5", trackList)
+activate Cache
+Cache --> Service: Stored
+deactivate Cache
+
+Service --> Controller: List<SpotifyTrackDto>
+deactivate Service
+
+Controller --> Usuario: 200 OK (400ms total)
+deactivate Controller
+
+note right of Usuario
+  Primera request: lenta
+  Tiempo: ~400ms
+  (llamada a Spotify API)
+end note
+
+== Segunda Request (Cache Hit) ==
+
+Usuario -> Controller: GET /tracks/spotify/search?query=rock&limit=5
+activate Controller
+
+Controller -> Service: searchTracks("rock", 5)
+activate Service
+
+Service -> Cache: get("searchTracks::rock_5")
+activate Cache
+
+note right of Cache
+  Cache hit!
+  Datos existen
+end note
+
+Cache --> Service: trackList (from cache)
+deactivate Cache
+
+Service --> Controller: List<SpotifyTrackDto>
+deactivate Service
+
+Controller --> Usuario: 200 OK (8ms total)
+deactivate Controller
+
+note right of Usuario
+  Request cacheada: rápida
+  Tiempo: ~8ms
+  Mejora: 50x más rápido
+  Sin llamada a Spotify API
+end note
+
+== Tercera Request (Cache Hit) ==
+
+Usuario -> Controller: GET /tracks/spotify/search?query=rock&limit=5
+activate Controller
+Controller -> Service: searchTracks("rock", 5)
+activate Service
+Service -> Cache: get("searchTracks::rock_5")
+activate Cache
+Cache --> Service: trackList (from cache)
+deactivate Cache
+Service --> Controller: List<SpotifyTrackDto>
+deactivate Service
+Controller --> Usuario: 200 OK (7ms total)
+deactivate Controller
+
+== Evicción Programada (cada 10 minutos) ==
+
+participant "Scheduled\nTask" as Scheduler
+
+Scheduler -> Service: @Scheduled(fixedRate=600000)\nevictAllCaches()
+activate Service
+
+Service -> Cache: @CacheEvict(allEntries=true)
+activate Cache
+
+note right of Cache
+  Limpia todos los caches:
+  - randomTracks
+  - searchTracks
+  - trackPlayback
+end note
+
+Cache --> Service: Caches evicted
+deactivate Cache
+
+Service --> Scheduler: Done
+deactivate Service
+
+note right of Scheduler
+  Evicción cada 10 minutos
+  mantiene datos frescos
+end note
+
+== Request después de evicción (Cache Miss nuevamente) ==
+
+Usuario -> Controller: GET /tracks/spotify/search?query=rock&limit=5
+activate Controller
+Controller -> Service: searchTracks("rock", 5)
+activate Service
+Service -> Cache: get("searchTracks::rock_5")
+activate Cache
+Cache --> Service: null (evicted)
+deactivate Cache
+Service -> Spotify: GET /v1/search...
+activate Spotify
+Spotify --> Service: Fresh data
+deactivate Spotify
+Service -> Cache: put(key, freshData)
+activate Cache
+Cache --> Service: Stored
+deactivate Cache
+Service --> Controller: List<SpotifyTrackDto>
+deactivate Service
+Controller --> Usuario: 200 OK
+deactivate Controller
+
+' End lifelines
+deactivate Usuario
+deactivate Controller
+deactivate Service
+deactivate Cache
+deactivate Spotify
+
+@enduml

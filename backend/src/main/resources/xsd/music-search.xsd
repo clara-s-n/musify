@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://tfu.com/backend/soap/music"
+           xmlns:tns="http://tfu.com/backend/soap/music"
+           elementFormDefault="qualified">
+
+    <!-- Elementos principales para la búsqueda de música -->
+    <xs:element name="searchMusicRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="query" type="xs:string"/>
+                <xs:element name="limit" type="xs:int" minOccurs="0" default="10"/>
+                <xs:element name="searchType" type="tns:searchType" minOccurs="0" default="TRACK"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="searchMusicResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="success" type="xs:boolean"/>
+                <xs:element name="message" type="xs:string"/>
+                <xs:element name="totalResults" type="xs:int"/>
+                <xs:element name="tracks" type="tns:trackList" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Elemento para obtener canciones aleatorias -->
+    <xs:element name="getRandomMusicRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="limit" type="xs:int" minOccurs="0" default="10"/>
+                <xs:element name="genre" type="xs:string" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="getRandomMusicResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="success" type="xs:boolean"/>
+                <xs:element name="message" type="xs:string"/>
+                <xs:element name="totalResults" type="xs:int"/>
+                <xs:element name="tracks" type="tns:trackList" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Elemento para obtener detalles de una canción -->
+    <xs:element name="getTrackDetailsRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="trackId" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="getTrackDetailsResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="success" type="xs:boolean"/>
+                <xs:element name="message" type="xs:string"/>
+                <xs:element name="track" type="tns:track" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Tipos complejos -->
+    <xs:complexType name="trackList">
+        <xs:sequence>
+            <xs:element name="track" type="tns:track" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="track">
+        <xs:sequence>
+            <xs:element name="id" type="xs:string"/>
+            <xs:element name="name" type="xs:string"/>
+            <xs:element name="artist" type="xs:string"/>
+            <xs:element name="album" type="xs:string" minOccurs="0"/>
+            <xs:element name="duration" type="xs:int" minOccurs="0"/>
+            <xs:element name="previewUrl" type="xs:string" minOccurs="0"/>
+            <xs:element name="spotifyUrl" type="xs:string" minOccurs="0"/>
+            <xs:element name="imageUrl" type="xs:string" minOccurs="0"/>
+            <xs:element name="explicit" type="xs:boolean" minOccurs="0"/>
+            <xs:element name="popularity" type="xs:int" minOccurs="0"/>
+            <xs:element name="releaseDate" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Tipos simples -->
+    <xs:simpleType name="searchType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="TRACK"/>
+            <xs:enumeration value="ARTIST"/>
+            <xs:enumeration value="ALBUM"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Elemento para errores SOAP -->
+    <xs:element name="musicServiceFault">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="errorCode" type="xs:string"/>
+                <xs:element name="errorMessage" type="xs:string"/>
+                <xs:element name="errorDetails" type="xs:string" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>

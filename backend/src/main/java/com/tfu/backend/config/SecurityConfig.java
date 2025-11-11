@@ -68,6 +68,7 @@ public class SecurityConfig {
                 "/swagger-ui.html")
             .permitAll()
             .requestMatchers("/music/spotify/**").permitAll() // Hacer públicos los endpoints de Spotify
+            .requestMatchers("/soap/**").permitAll() // Hacer públicos los endpoints SOAP
             .anyRequest().authenticated())
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .userDetailsService(userDetailsService) // Usar directamente UserDetailsService
@@ -109,11 +110,12 @@ public class SecurityConfig {
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
 
-    // Permitir solicitudes desde el origen de desarrollo de Angular
-    configuration.setAllowedOrigins(Arrays.asList(
-        "http://localhost:4200", // Angular dev server
-        "http://localhost:8080", // Angular app servida desde Spring Boot
-        "http://localhost" // Otros puertos locales
+    // Permitir solicitudes desde cualquier IP (para desarrollo/demo)
+    configuration.setAllowedOriginPatterns(Arrays.asList(
+        "http://localhost:*", // Cualquier puerto localhost
+        "http://*:4200", // Angular dev server desde cualquier IP
+        "http://*:8080", // Angular app servida desde cualquier IP
+        "http://*" // Permitir cualquier IP (para desarrollo/demo)
     ));
 
     // Permitir todos los métodos HTTP comunes

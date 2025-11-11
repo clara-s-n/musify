@@ -1,0 +1,118 @@
+@startuml rate-limiting-sequence
+!theme plain
+title Patrón Rate Limiting - Diagrama de Secuencia
+
+actor Atacante as "Usuario/Atacante"
+participant "AuthController" as Controller
+participant "AuthService\n@RateLimiter" as Service
+participant "Rate Limiter\n(Resilience4j)" as RateLimiter
+participant "UserRepository" as Repo
+database "PostgreSQL" as DB
+
+== Intentos Normales (dentro del límite) ==
+
+loop 5 intentos de login
+  Atacante -> Controller: POST /auth/login\n{"email":"...", "password":"..."}
+  activate Controller
+  Controller -> Service: login(email, password)
+  activate Service
+  
+  Service -> RateLimiter: Verificar permisos disponibles
+  activate RateLimiter
+  
+  alt Permisos disponibles (< 5 en 1 minuto)
+    RateLimiter ---> Service: Permiso concedido
+    deactivate RateLimiter
+    
+    Service -> Repo: findByEmail(email)
+    activate Repo
+    Repo -> DB: SELECT * FROM users...
+    activate DB
+    DB ---> Repo: User data
+    deactivate DB
+    Repo ---> Service: User
+    deactivate Repo
+    
+    Service ---> Controller: LoginResponse (token)
+    deactivate Service
+    Controller ---> Atacante: 200 OK (con JWT token)
+    deactivate Controller
+  end
+  
+  note right of RateLimiter
+    Intento: 1-5
+    Permisos restantes: 4...0
+  end note
+end
+
+note right of Atacante
+  **Configuración:**
+  limitForPeriod: 5
+  limitRefreshPeriod: 1 minuto
+  
+  5 intentos permitidos por minuto
+end note
+
+== Intento 6 (excede el límite) ==
+
+Atacante -> Controller: POST /auth/login [Intento 6]
+activate Controller
+Controller -> Service: login(email, password)
+activate Service
+
+Service -> RateLimiter: Verificar permisos
+activate RateLimiter
+
+alt Sin permisos disponibles
+  RateLimiter ---> Service: RequestNotPermitted Exception
+  deactivate RateLimiter
+  
+  note right of RateLimiter
+    Límite excedido!
+    5 intentos en 1 minuto
+  end note
+  
+  Service ---> Controller: RequestNotPermitted Exception
+  deactivate Service
+  
+  Controller ---> Atacante: 429 Too Many Requests\n{"error": "Rate limit exceeded"}
+  deactivate Controller
+end
+
+note right of Atacante
+  **Ataque bloqueado:**
+  Después de 5 intentos,
+  se bloquean requests
+  adicionales por 1 minuto
+  
+  Previene fuerza bruta
+end note
+
+== Después de 1 minuto ==
+
+note over RateLimiter
+  Período de refresh (1 minuto) pasó
+  Permisos se resetean a 5
+end note
+
+Atacante -> Controller: POST /auth/login [Después de 1 min]
+activate Controller
+Controller -> Service: login(email, password)
+activate Service
+
+Service -> RateLimiter: Verificar permisos
+activate RateLimiter
+RateLimiter ---> Service: Permiso concedido (contador reseteado)
+deactivate RateLimiter
+
+Service -> Repo: findByEmail(email)
+activate Repo
+Repo ---> Service: User
+deactivate Repo
+
+Service ---> Controller: LoginResponse
+deactivate Service
+Controller ---> Atacante: 200 OK
+deactivate Controller
+
+@enduml
