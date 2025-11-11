@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
@@ -83,70 +84,66 @@ public class SpotifyService {
 
   @Retry(name = "spotifyApi")
   @CircuitBreaker(name = "spotifyApi", fallbackMethod = "getRandomTracksFallback")
-  @Cacheable(value = "randomTracks", key = "#limit")
+  @Cacheable(value = "randomTracks", key = "#limit + '_' + T(java.time.LocalDateTime).now().getMinute() / 5")
   public List<SpotifyTrackDto> getRandomTracks(int limit) {
     System.out.println("Getting random tracks from Spotify, limit: " + limit);
+    
+    // Lista de queries aleatorias para obtener variedad
+    String[] randomQueries = {
+      "pop", "rock", "jazz", "electronic", "hip hop", "indie", "alternative", 
+      "latin", "reggaeton", "salsa", "bachata", "cumbia", "folk", "blues",
+      "classical", "ambient", "funk", "soul", "r&b", "country", "metal"
+    };
+    
+    // Seleccionar query aleatoria
+    String randomQuery = randomQueries[(int) (Math.random() * randomQueries.length)];
+    
+    // Usar diferentes años para más variedad
+    int[] years = {2020, 2021, 2022, 2023, 2024};
+    int randomYear = years[(int) (Math.random() * years.length)];
 
     try {
       HttpHeaders headers = getAuthHeaders();
       HttpEntity<String> entity = new HttpEntity<>(headers);
 
-      String url = "https://api.spotify.com/v1/browse/new-releases?limit=" + limit;
+      // Usar search con query aleatoria en lugar de new-releases
+      String url = String.format(
+        "https://api.spotify.com/v1/search?q=genre:%s year:%d&type=track&limit=%d&offset=%d",
+        randomQuery, randomYear, Math.min(limit * 2, 50), (int) (Math.random() * 100)
+      );
       System.out.println("Making request to: " + url);
 
-      ResponseEntity<SpotifyNewReleasesResponse> response = restTemplate.exchange(
+      ResponseEntity<SpotifySearchResponse> response = restTemplate.exchange(
           url,
           HttpMethod.GET,
           entity,
-          SpotifyNewReleasesResponse.class);
+          SpotifySearchResponse.class);
 
       System.out.println("Response status: " + response.getStatusCode());
 
-      if (response.getBody() != null) {
+      if (response.getBody() != null && response.getBody().getTracks() != null) {
         System.out.println("Response body received");
+        
+        List<SpotifyTrack> spotifyTracks = response.getBody().getTracks().getItems();
+        System.out.println("Tracks found: " + spotifyTracks.size());
 
-        if (response.getBody().getAlbums() != null) {
-          System.out.println("Albums found: " + response.getBody().getAlbums().getTotal());
+        if (!spotifyTracks.isEmpty()) {
+          List<SpotifyTrackDto> tracks = spotifyTracks.stream()
+              .map(this::convertToDto)
+              .collect(Collectors.toList());
 
-          List<SpotifyTrackDto> tracks = new ArrayList<>();
-
-          // Convert albums to DTOs
-          if (response.getBody().getAlbums().getItems() != null) {
-            for (SpotifyAlbum album : response.getBody().getAlbums().getItems()) {
-              System.out.println("Processing album: " + album.getName());
-
-              // Create a track DTO from album data (since the API doesn't actually return
-              // tracks)
-              String artistNames = album.getArtists().stream()
-                  .map(SpotifyArtist::getName)
-                  .collect(Collectors.joining(", "));
-
-              String imageUrl = null;
-              if (album.getImages() != null && !album.getImages().isEmpty()) {
-                imageUrl = album.getImages().get(0).getUrl();
-              }
-
-              SpotifyTrackDto trackDto = new SpotifyTrackDto(
-                  album.getId(),
-                  album.getName(),
-                  artistNames,
-                  album.getName(), // Album name is same as track name for this simplification
-                  imageUrl,
-                  null // No preview URL available from this endpoint
-              );
-
-              tracks.add(trackDto);
-
-              if (tracks.size() >= limit) {
-                break;
-              }
-            }
+          // Randomizar la lista resultante
+          Collections.shuffle(tracks);
+          
+          // Limitar al número solicitado
+          if (tracks.size() > limit) {
+            tracks = tracks.subList(0, limit);
           }
 
-          System.out.println("Returning " + tracks.size() + " tracks");
+          System.out.println("Returning " + tracks.size() + " randomized tracks");
           return tracks;
         } else {
-          System.out.println("No albums found in response");
+          System.out.println("No tracks found in response");
         }
       } else {
         System.out.println("Response body is null");
@@ -182,9 +179,89 @@ public class SpotifyService {
     return Collections.emptyList();
   }
 
+  /**
+   * Alternative method to get truly random tracks using different strategies
+   */
+  @Retry(name = "spotifyApi")
+  @CircuitBreaker(name = "spotifyApi", fallbackMethod = "getTrulyRandomTracksFallback")
+  public List<SpotifyTrackDto> getTrulyRandomTracks(int limit) {
+    System.out.println("Getting truly random tracks using multiple strategies, limit: " + limit);
+    
+    List<SpotifyTrackDto> allTracks = new ArrayList<>();
+    Random random = new Random();
+    
+    // Strategy 1: Random search queries
+    String[] randomWords = {
+      "love", "night", "day", "light", "heart", "time", "life", "dream", "feel", "way",
+      "dance", "music", "song", "beat", "rhythm", "soul", "fire", "water", "sun", "moon"
+    };
+    
+    try {
+      for (int i = 0; i < 3; i++) { // Try 3 different random searches
+        String randomWord = randomWords[random.nextInt(randomWords.length)];
+        int randomOffset = random.nextInt(100);
+        
+        HttpHeaders headers = getAuthHeaders();
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        
+        String url = String.format(
+          "https://api.spotify.com/v1/search?q=%s&type=track&limit=20&offset=%d",
+          randomWord, randomOffset
+        );
+        
+        ResponseEntity<SpotifySearchResponse> response = restTemplate.exchange(
+            url, HttpMethod.GET, entity, SpotifySearchResponse.class);
+        
+        if (response.getBody() != null && response.getBody().getTracks() != null) {
+          List<SpotifyTrack> tracks = response.getBody().getTracks().getItems();
+          allTracks.addAll(tracks.stream()
+              .map(this::convertToDto)
+              .collect(Collectors.toList()));
+        }
+      }
+      
+      // Shuffle all collected tracks
+      Collections.shuffle(allTracks);
+      
+      // Remove duplicates based on track ID
+      List<SpotifyTrackDto> uniqueTracks = allTracks.stream()
+          .collect(Collectors.toMap(
+              SpotifyTrackDto::getId,
+              track -> track,
+              (existing, replacement) -> existing))
+          .values()
+          .stream()
+          .collect(Collectors.toList());
+      
+      // Shuffle again and limit
+      Collections.shuffle(uniqueTracks);
+      
+      if (uniqueTracks.size() > limit) {
+        uniqueTracks = uniqueTracks.subList(0, limit);
+      }
+      
+      System.out.println("Returning " + uniqueTracks.size() + " truly random unique tracks");
+      return uniqueTracks;
+      
+    } catch (Exception e) {
+      System.err.println("Error getting truly random tracks: " + e.getMessage());
+      return Collections.emptyList();
+    }
+  }
+
   // Fallback methods
   public List<SpotifyTrackDto> getRandomTracksFallback(int limit, Throwable t) {
-    // Return empty list or cached data
+    System.out.println("Random tracks fallback triggered: " + t.getMessage());
+    // Try the alternative method as fallback
+    try {
+      return getTrulyRandomTracks(limit);
+    } catch (Exception e) {
+      return Collections.emptyList();
+    }
+  }
+  
+  public List<SpotifyTrackDto> getTrulyRandomTracksFallback(int limit, Throwable t) {
+    System.out.println("Truly random tracks fallback triggered: " + t.getMessage());
     return Collections.emptyList();
   }
 
@@ -310,11 +387,20 @@ public class SpotifyService {
 
   /**
    * Evicts all cache entries periodically to prevent stale data.
-   * Runs every 10 minutes.
+   * Runs every 2 minutes for randomTracks to ensure freshness.
    */
-  @CacheEvict(value = { "randomTracks", "searchTracks", "trackPlayback" }, allEntries = true)
-  @Scheduled(fixedRate = 600000) // Every 10 minutes
-  public void evictAllCaches() {
-    System.out.println("Evicting all Spotify caches to refresh data");
+  @CacheEvict(value = { "randomTracks" }, allEntries = true)
+  @Scheduled(fixedRate = 120000) // Every 2 minutes for random tracks
+  public void evictRandomTracksCache() {
+    System.out.println("Evicting randomTracks cache to ensure fresh random results");
+  }
+  
+  /**
+   * Evicts search cache less frequently as searches are more predictable.
+   */
+  @CacheEvict(value = { "searchTracks", "trackPlayback" }, allEntries = true)
+  @Scheduled(fixedRate = 600000) // Every 10 minutes for search results
+  public void evictSearchCache() {
+    System.out.println("Evicting search and playback caches to refresh data");
   }
 }

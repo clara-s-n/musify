@@ -1,28 +1,183 @@
-<body>
-  <div class="header-top">
-    <app-logo></app-logo>
-    <search-bar (searchResults)="onSearchResults($event)"></search-bar>
-  </div>
-  <div class="cards-container">
-    @for (results of searchResults; track results.id) {
-    <div class="music-card" (click)="playTrack(results.name, results.artists)">
-      <div class="mat-card-header">
-        <div class="mat-card-title-group">
-          <div>
-            <div class="mat-card-title">
-              <b>{{ results.name }}</b>
-            </div>
-            <div class="mat-card-subtitle">
-              <p>{{ results.artists }}</p>
-            </div>
-          </div>
-          <img mat-card-sm-image src="{{ results.imageUrl }}" />
-        </div>
+<body class="results-page">
+  <!-- Header -->
+  <header class="header-top">
+    <div class="header-content">
+      <app-logo></app-logo>
+      <div class="search-section">
+        <search-bar (searchResults)="onSearchResults($event)"></search-bar>
       </div>
     </div>
-    }
-  </div>
-  <footer class="player-bar">
-    <audio class="reproductor" [src]="audioURL" controls autoplay></audio>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    
+    <!-- Results Header -->
+    <div class="results-header" *ngIf="searchResults && searchResults.length > 0">
+      <div class="results-info">
+        <h1 class="results-title">{{ searchQuery }}</h1>
+        <p class="results-count">{{ searchResults.length }} resultados encontrados</p>
+      </div>
+      
+      <div class="results-controls">
+        <!-- View Mode Toggle -->
+        <div class="view-toggle">
+          <button 
+            class="view-btn" 
+            [class.active]="viewMode === 'grid'"
+            (click)="viewMode = 'grid'"
+            title="Vista en cuadrícula"
+          >
+            ⊞
+          </button>
+          <button 
+            class="view-btn" 
+            [class.active]="viewMode === 'list'"
+            (click)="viewMode = 'list'"
+            title="Vista en lista"
+          >
+            ☰
+          </button>
+        </div>
+
+        <!-- Sort Options -->
+        <div class="sort-section">
+          <label for="sort-select">Ordenar por:</label>
+          <select 
+            id="sort-select" 
+            [(ngModel)]="sortBy" 
+            (change)="changeSortBy(sortBy)"
+            class="sort-select"
+          >
+            <option value="name">Nombre</option>
+            <option value="artist">Artista</option>
+          </select>
+        </div>
+
+        <!-- Back Button -->
+        <button class="back-btn" (click)="goBack()" title="Volver al inicio">
+          ← Volver
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-container" *ngIf="isLoading">
+      <div class="loading-spinner">♪</div>
+      <p>Cargando resultados...</p>
+    </div>
+
+    <!-- Results Grid View -->
+    <div 
+      class="results-container grid-view" 
+      *ngIf="!isLoading && searchResults && searchResults.length > 0 && viewMode === 'grid'"
+    >
+      @for (track of getSortedResults(); track track.id) {
+        <div class="track-card" (click)="playTrack(track)">
+          <div class="track-image-container">
+            <img 
+              [src]="track.imageUrl" 
+              [alt]="track.name"
+              class="track-image"
+              (error)="$event.target.src='https://via.placeholder.com/200x200?text=🎵'"
+            >
+            <div class="play-overlay">
+              <button class="play-button">▶</button>
+            </div>
+          </div>
+          
+          <div class="track-info">
+            <h3 class="track-name" [title]="track.name">{{ track.name }}</h3>
+            <p class="track-artist" [title]="track.artists">{{ track.artists }}</p>
+            <p class="track-album" [title]="track.album" *ngIf="track.album">{{ track.album }}</p>
+          </div>
+
+          <div class="track-actions">
+            <button 
+              class="action-btn" 
+              (click)="addToQueue(track); $event.stopPropagation()"
+              title="Añadir a cola"
+            >
+              +
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Results List View -->
+    <div 
+      class="results-container list-view" 
+      *ngIf="!isLoading && searchResults && searchResults.length > 0 && viewMode === 'list'"
+    >
+      <div class="list-header">
+        <span class="col-title col-track">Canción</span>
+        <span class="col-title col-artist">Artista</span>
+        <span class="col-title col-album">Álbum</span>
+        <span class="col-title col-actions">Acciones</span>
+      </div>
+
+      @for (track of getSortedResults(); track track.id; let i = $index) {
+        <div class="track-row" (click)="playTrack(track)">
+          <div class="col-track">
+            <img 
+              [src]="track.imageUrl" 
+              [alt]="track.name"
+              class="track-thumbnail"
+              (error)="$event.target.src='https://via.placeholder.com/40x40?text=🎵'"
+            >
+            <div class="track-info-inline">
+              <span class="track-name">{{ track.name }}</span>
+            </div>
+          </div>
+          
+          <div class="col-artist">
+            <span>{{ track.artists }}</span>
+          </div>
+          
+          <div class="col-album">
+            <span>{{ track.album || 'N/A' }}</span>
+          </div>
+          
+          <div class="col-actions">
+            <button 
+              class="action-btn play" 
+              (click)="playTrack(track); $event.stopPropagation()"
+              title="Reproducir"
+            >
+              ▶
+            </button>
+            <button 
+              class="action-btn add" 
+              (click)="addToQueue(track); $event.stopPropagation()"
+              title="Añadir a cola"
+            >
+              +
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- No Results -->
+    <div class="no-results" *ngIf="!isLoading && (!searchResults || searchResults.length === 0)">
+      <div class="no-results-content">
+        <div class="no-results-icon">🔍</div>
+        <h2>No se encontraron resultados</h2>
+        <p>Intenta con otros términos de búsqueda</p>
+        <button class="back-btn" (click)="goBack()">Volver al inicio</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Music Player -->
+  <footer class="player-section">
+    <app-music-player></app-music-player>
+    
+    <!-- Fallback Player -->
+    <div class="fallback-player" *ngIf="audioURL">
+      <audio class="reproductor" [src]="audioURL" controls autoplay></audio>
+    </div>
   </footer>
 </body>
