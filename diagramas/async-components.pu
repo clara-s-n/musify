@@ -41,11 +41,11 @@ package "Spring Boot Application" {
   
 }
 
+actor "Usuario" as User
+
 cloud "External" {
   component "Flaky Service" as Flaky
 }
-
-actor "Usuario" as User
 
 ' Relaciones
 App --> Config : configures

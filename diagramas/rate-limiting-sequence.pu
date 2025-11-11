@@ -21,21 +21,21 @@ loop 5 intentos de login
   activate RateLimiter
   
   alt Permisos disponibles (< 5 en 1 minuto)
-    RateLimiter --> Service: Permiso concedido
+    RateLimiter ---> Service: Permiso concedido
     deactivate RateLimiter
     
     Service -> Repo: findByEmail(email)
     activate Repo
     Repo -> DB: SELECT * FROM users...
     activate DB
-    DB --> Repo: User data
+    DB ---> Repo: User data
     deactivate DB
-    Repo --> Service: User
+    Repo ---> Service: User
     deactivate Repo
     
-    Service --> Controller: LoginResponse (token)
+    Service ---> Controller: LoginResponse (token)
     deactivate Service
-    Controller --> Atacante: 200 OK (con JWT token)
+    Controller ---> Atacante: 200 OK (con JWT token)
     deactivate Controller
   end
   
@@ -64,7 +64,7 @@ Service -> RateLimiter: Verificar permisos
 activate RateLimiter
 
 alt Sin permisos disponibles
-  RateLimiter --> Service: RequestNotPermitted Exception
+  RateLimiter ---> Service: RequestNotPermitted Exception
   deactivate RateLimiter
   
   note right of RateLimiter
@@ -72,10 +72,10 @@ alt Sin permisos disponibles
     5 intentos en 1 minuto
   end note
   
-  Service --> Controller: RequestNotPermitted Exception
+  Service ---> Controller: RequestNotPermitted Exception
   deactivate Service
   
-  Controller --> Atacante: 429 Too Many Requests\n{"error": "Rate limit exceeded"}
+  Controller ---> Atacante: 429 Too Many Requests\n{"error": "Rate limit exceeded"}
   deactivate Controller
 end
 
@@ -102,17 +102,17 @@ activate Service
 
 Service -> RateLimiter: Verificar permisos
 activate RateLimiter
-RateLimiter --> Service: Permiso concedido (contador reseteado)
+RateLimiter ---> Service: Permiso concedido (contador reseteado)
 deactivate RateLimiter
 
 Service -> Repo: findByEmail(email)
 activate Repo
-Repo --> Service: User
+Repo ---> Service: User
 deactivate Repo
 
-Service --> Controller: LoginResponse
+Service ---> Controller: LoginResponse
 deactivate Service
-Controller --> Atacante: 200 OK
+Controller ---> Atacante: 200 OK
 deactivate Controller
 
 @enduml

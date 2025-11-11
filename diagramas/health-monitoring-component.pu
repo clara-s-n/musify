@@ -20,14 +20,14 @@ package "Spring Boot Application" {
 
 database "PostgreSQL" as DB
 
+actor "DevOps" as DevOps
+actor "User" as User
+
 cloud "Monitoring Tools" {
   component "Prometheus" as Prom
   component "Grafana" as Graf
   component "Load Balancer\n(NGINX)" as LB
 }
-
-actor "DevOps" as DevOps
-actor "User" as User
 
 ' Relaciones internas
 Actuator --> HealthEndpoint

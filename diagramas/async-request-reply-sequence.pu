@@ -10,6 +10,15 @@ participant "Async\nThread Pool\n(5-10 threads)" as AsyncPool
 participant "PlaybackService" as Service
 participant "Flaky Service" as Flaky
 
+' Lifelines
+activate Usuario
+activate Tomcat
+activate Controller
+activate CF
+activate AsyncPool
+activate Service
+activate Flaky
+
 Usuario -> Tomcat: POST /playback/start?trackId=T1
 activate Tomcat
 
@@ -84,13 +93,21 @@ AsyncPool --> CF: Result
 deactivate AsyncPool
 
 CF --> Usuario: 200 OK ResponseEntity<PlaybackDTO>
-deactivate CF
 
 note right of Usuario
   Respuesta asíncrona
   Tiempo total: variable
   (depende de retries)
 end note
+
+' End lifelines
+deactivate Usuario
+deactivate Tomcat
+deactivate Controller
+deactivate CF
+deactivate AsyncPool
+deactivate Service
+deactivate Flaky
 
 == Múltiples Requests Concurrentes ==
 

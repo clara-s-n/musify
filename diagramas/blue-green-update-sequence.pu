@@ -10,6 +10,15 @@ participant "Backend\nReplica 2\n(backend-app-2)" as Backend2
 participant "PostgreSQL" as DB
 participant "Users" as Users
 
+' Lifelines
+activate DevOps
+activate Docker
+activate NGINX
+activate Backend1
+activate Backend2
+activate DB
+activate Users
+
 == Estado Inicial: Ambas réplicas v1.0 ==
 
 note over Backend1, Backend2
@@ -266,5 +275,14 @@ note bottom of DevOps
   - Graceful shutdown en aplicación
   - Database backward-compatible migrations
 end note
+
+' End lifelines
+deactivate DevOps
+deactivate Docker
+deactivate NGINX
+deactivate Backend1
+deactivate Backend2
+deactivate DB
+deactivate Users
 
 @enduml

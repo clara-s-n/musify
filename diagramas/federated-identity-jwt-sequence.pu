@@ -10,6 +10,15 @@ participant "JwtTokenProvider" as JwtProvider
 participant "UserRepository" as Repo
 database "PostgreSQL" as DB
 
+' Lifelines
+activate Usuario
+activate Controller
+activate Service
+activate AuthManager
+activate JwtProvider
+activate Repo
+activate DB
+
 == Login y Generación de JWT ==
 
 Usuario -> Controller: POST /auth/login\n{"email":"user@test.com", "password":"pass123"}
@@ -126,5 +135,14 @@ else Token inválido/expirado
   JwtProvider --> Filter: false / Exception
   Filter --> Usuario: 401 Unauthorized
 end
+
+' End lifelines
+deactivate Usuario
+deactivate Controller
+deactivate Service
+deactivate AuthManager
+deactivate JwtProvider
+deactivate Repo
+deactivate DB
 
 @enduml

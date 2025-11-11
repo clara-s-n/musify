@@ -2,9 +2,9 @@
 !theme plain
 title Patrón Gatekeeper - Diagrama de Despliegue
 
-cloud "Internet" {
-  actor "Cliente\nExterno" as Client
-}
+actor "Cliente\nExterno" as Client
+
+cloud "Internet" as Internet
 
 node "<<Docker Host>>" as DockerHost {
   
@@ -37,7 +37,8 @@ node "<<Docker Host>>" as DockerHost {
 }
 
 ' Conexiones externas
-Client --> port80 : HTTPS Request\n(público)
+Client --> Internet : Request
+Internet --> port80 : HTTPS Request\n(público)
 
 ' Conexiones internas
 NGINX --> port8443_1 : Load Balance\n(TLS, interno)

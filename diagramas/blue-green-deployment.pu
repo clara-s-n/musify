@@ -56,15 +56,18 @@ node "Docker Host" {
     end note
   }
   
-  cloud "External Services" {
-    node "Flaky Service" as FlakyService
-    node "Spotify API" as SpotifyAPI
-  }
+}
+
+cloud "External Services" {
+  node "Flaky Service" as FlakyService
+  node "Spotify API" as SpotifyAPI
 }
 
 actor "Users" as Users
+cloud "Internet" as Internet
 
-Users --> NGINX: HTTPS\nRequests
+Users --> Internet: Request
+Internet --> NGINX: HTTPS\nRequests
 
 NGINX -down-> Backend1: Load balance\n50% traffic
 NGINX -down-> Backend2: Load balance\n50% traffic

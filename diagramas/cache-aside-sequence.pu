@@ -8,6 +8,13 @@ participant "SpotifyService\n@Cacheable" as Service
 participant "Spring Cache\nManager" as Cache
 participant "Spotify API" as Spotify
 
+' Lifelines
+activate Usuario
+activate Controller
+activate Service
+activate Cache
+activate Spotify
+
 == Primera Request (Cache Miss) ==
 
 Usuario -> Controller: GET /tracks/spotify/search?query=rock&limit=5
@@ -152,5 +159,12 @@ Service --> Controller: List<SpotifyTrackDto>
 deactivate Service
 Controller --> Usuario: 200 OK
 deactivate Controller
+
+' End lifelines
+deactivate Usuario
+deactivate Controller
+deactivate Service
+deactivate Cache
+deactivate Spotify
 
 @enduml
