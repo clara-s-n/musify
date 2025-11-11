@@ -177,8 +177,15 @@
 }
 
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-20px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
 }
 
 /* Grid View */
@@ -366,7 +373,8 @@
   max-width: 200px;
 }
 
-.col-artist, .col-album {
+.col-artist,
+.col-album {
   color: #ccc;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -520,7 +528,8 @@
     align-items: stretch;
   }
 
-  .view-toggle, .sort-section {
+  .view-toggle,
+  .sort-section {
     justify-content: center;
   }
 
@@ -536,6 +545,7 @@
     display: none;
   }
 }
+
 .reproductor {
   width: 100%;
 }

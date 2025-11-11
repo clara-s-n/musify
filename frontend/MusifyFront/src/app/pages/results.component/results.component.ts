@@ -21,7 +21,7 @@ export class ResultsComponent {
   youtubeService = inject(YoutubeService);
   playerService = inject(PlayerService);
   audioURL: string = '';
-  
+
   // Estados de la UI
   viewMode: 'grid' | 'list' = 'grid';
   sortBy: 'name' | 'artist' | 'popularity' = 'name';
@@ -94,7 +94,7 @@ export class ResultsComponent {
    */
   getSortedResults(): SpotifyTrack[] {
     if (!this.searchResults) return [];
-    
+
     return [...this.searchResults].sort((a, b) => {
       switch (this.sortBy) {
         case 'name':

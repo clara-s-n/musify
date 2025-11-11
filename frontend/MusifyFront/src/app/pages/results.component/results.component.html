@@ -11,31 +11,23 @@
 
   <!-- Main Content -->
   <main class="main-content">
-    
+
     <!-- Results Header -->
     <div class="results-header" *ngIf="searchResults && searchResults.length > 0">
       <div class="results-info">
         <h1 class="results-title">{{ searchQuery }}</h1>
         <p class="results-count">{{ searchResults.length }} resultados encontrados</p>
       </div>
-      
+
       <div class="results-controls">
         <!-- View Mode Toggle -->
         <div class="view-toggle">
-          <button 
-            class="view-btn" 
-            [class.active]="viewMode === 'grid'"
-            (click)="viewMode = 'grid'"
-            title="Vista en cuadrícula"
-          >
+          <button class="view-btn" [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'"
+            title="Vista en cuadrícula">
             ⊞
           </button>
-          <button 
-            class="view-btn" 
-            [class.active]="viewMode === 'list'"
-            (click)="viewMode = 'list'"
-            title="Vista en lista"
-          >
+          <button class="view-btn" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'"
+            title="Vista en lista">
             ☰
           </button>
         </div>
@@ -43,12 +35,7 @@
         <!-- Sort Options -->
         <div class="sort-section">
           <label for="sort-select">Ordenar por:</label>
-          <select 
-            id="sort-select" 
-            [(ngModel)]="sortBy" 
-            (change)="changeSortBy(sortBy)"
-            class="sort-select"
-          >
+          <select id="sort-select" [(ngModel)]="sortBy" (change)="changeSortBy(sortBy)" class="sort-select">
             <option value="name">Nombre</option>
             <option value="artist">Artista</option>
           </select>
@@ -68,48 +55,36 @@
     </div>
 
     <!-- Results Grid View -->
-    <div 
-      class="results-container grid-view" 
-      *ngIf="!isLoading && searchResults && searchResults.length > 0 && viewMode === 'grid'"
-    >
+    <div class="results-container grid-view"
+      *ngIf="!isLoading && searchResults && searchResults.length > 0 && viewMode === 'grid'">
       @for (track of getSortedResults(); track track.id) {
-        <div class="track-card" (click)="playTrack(track)">
-          <div class="track-image-container">
-            <img 
-              [src]="track.imageUrl" 
-              [alt]="track.name"
-              class="track-image"
-              (error)="$event.target.src='https://via.placeholder.com/200x200?text=🎵'"
-            >
-            <div class="play-overlay">
-              <button class="play-button">▶</button>
-            </div>
-          </div>
-          
-          <div class="track-info">
-            <h3 class="track-name" [title]="track.name">{{ track.name }}</h3>
-            <p class="track-artist" [title]="track.artists">{{ track.artists }}</p>
-            <p class="track-album" [title]="track.album" *ngIf="track.album">{{ track.album }}</p>
-          </div>
-
-          <div class="track-actions">
-            <button 
-              class="action-btn" 
-              (click)="addToQueue(track); $event.stopPropagation()"
-              title="Añadir a cola"
-            >
-              +
-            </button>
+      <div class="track-card" (click)="playTrack(track)">
+        <div class="track-image-container">
+          <img [src]="track.imageUrl" [alt]="track.name" class="track-image"
+            (error)="$event.target.src='https://via.placeholder.com/200x200?text=🎵'">
+          <div class="play-overlay">
+            <button class="play-button">▶</button>
           </div>
         </div>
+
+        <div class="track-info">
+          <h3 class="track-name" [title]="track.name">{{ track.name }}</h3>
+          <p class="track-artist" [title]="track.artists">{{ track.artists }}</p>
+          <p class="track-album" [title]="track.album" *ngIf="track.album">{{ track.album }}</p>
+        </div>
+
+        <div class="track-actions">
+          <button class="action-btn" (click)="addToQueue(track); $event.stopPropagation()" title="Añadir a cola">
+            +
+          </button>
+        </div>
+      </div>
       }
     </div>
 
     <!-- Results List View -->
-    <div 
-      class="results-container list-view" 
-      *ngIf="!isLoading && searchResults && searchResults.length > 0 && viewMode === 'list'"
-    >
+    <div class="results-container list-view"
+      *ngIf="!isLoading && searchResults && searchResults.length > 0 && viewMode === 'list'">
       <div class="list-header">
         <span class="col-title col-track">Canción</span>
         <span class="col-title col-artist">Artista</span>
@@ -118,44 +93,32 @@
       </div>
 
       @for (track of getSortedResults(); track track.id; let i = $index) {
-        <div class="track-row" (click)="playTrack(track)">
-          <div class="col-track">
-            <img 
-              [src]="track.imageUrl" 
-              [alt]="track.name"
-              class="track-thumbnail"
-              (error)="$event.target.src='https://via.placeholder.com/40x40?text=🎵'"
-            >
-            <div class="track-info-inline">
-              <span class="track-name">{{ track.name }}</span>
-            </div>
-          </div>
-          
-          <div class="col-artist">
-            <span>{{ track.artists }}</span>
-          </div>
-          
-          <div class="col-album">
-            <span>{{ track.album || 'N/A' }}</span>
-          </div>
-          
-          <div class="col-actions">
-            <button 
-              class="action-btn play" 
-              (click)="playTrack(track); $event.stopPropagation()"
-              title="Reproducir"
-            >
-              ▶
-            </button>
-            <button 
-              class="action-btn add" 
-              (click)="addToQueue(track); $event.stopPropagation()"
-              title="Añadir a cola"
-            >
-              +
-            </button>
+      <div class="track-row" (click)="playTrack(track)">
+        <div class="col-track">
+          <img [src]="track.imageUrl" [alt]="track.name" class="track-thumbnail"
+            (error)="$event.target.src='https://via.placeholder.com/40x40?text=🎵'">
+          <div class="track-info-inline">
+            <span class="track-name">{{ track.name }}</span>
           </div>
         </div>
+
+        <div class="col-artist">
+          <span>{{ track.artists }}</span>
+        </div>
+
+        <div class="col-album">
+          <span>{{ track.album || 'N/A' }}</span>
+        </div>
+
+        <div class="col-actions">
+          <button class="action-btn play" (click)="playTrack(track); $event.stopPropagation()" title="Reproducir">
+            ▶
+          </button>
+          <button class="action-btn add" (click)="addToQueue(track); $event.stopPropagation()" title="Añadir a cola">
+            +
+          </button>
+        </div>
+      </div>
       }
     </div>
 
@@ -174,7 +137,7 @@
   <!-- Music Player -->
   <footer class="player-section">
     <app-music-player></app-music-player>
-    
+
     <!-- Fallback Player -->
     <div class="fallback-player" *ngIf="audioURL">
       <audio class="reproductor" [src]="audioURL" controls autoplay></audio>
