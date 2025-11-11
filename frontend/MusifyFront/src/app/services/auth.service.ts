@@ -98,15 +98,38 @@ export class AuthService {
   /**
    * Logout user and clear stored data
    */
-  logout(): void {
-    // Clear token from storage
+  logout(): Observable<any> {
+    const token = this.getToken();
+
+    // Clear local state immediately
     sessionStorage.removeItem(this.TOKEN_KEY);
-
-    // Reset user state
     this.currentUserSignal.set(null);
+    this.loadingSubject.next(false);
 
-    // Optional: Call backend logout endpoint if needed
-    // this.http.post(`${this.API_URL}/logout`, {}).subscribe();
+    // Call backend logout endpoint if token exists
+    if (token) {
+      return this.http.post(`${this.API_URL}/logout`, {}, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }).pipe(
+        catchError((error) => {
+          console.warn('Error during logout:', error);
+          // Even if backend logout fails, we already cleared local state
+          return of({ success: true, message: 'Logout completed locally' });
+        })
+      );
+    }
+
+    // Return observable for consistency
+    return of({ success: true, message: 'Logout completed' });
+  }
+
+  /**
+   * Quick logout without backend call (for compatibility)
+   */
+  logoutLocal(): void {
+    sessionStorage.removeItem(this.TOKEN_KEY);
+    this.currentUserSignal.set(null);
+    this.loadingSubject.next(false);
   }
 
   /**

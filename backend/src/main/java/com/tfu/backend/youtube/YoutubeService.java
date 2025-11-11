@@ -13,7 +13,7 @@ public class YoutubeService {
 
     // endpoint para conseguir audio de youtube
     @GetMapping("/audio")
-    public ResponseEntity<String> getAudioURL(@RequestParam String name,String artist ) {
+    public ResponseEntity<String> getAudioURL(@RequestParam String name, @RequestParam String artist) {
         try {
             // Busqueda de canción
             String query = String.format("ytsearch:%s %s", name, artist);

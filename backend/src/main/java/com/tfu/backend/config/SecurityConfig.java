@@ -68,7 +68,9 @@ public class SecurityConfig {
                 "/swagger-ui.html")
             .permitAll()
             .requestMatchers("/music/spotify/**").permitAll() // Hacer públicos los endpoints de Spotify
-            .requestMatchers("/soap/**").permitAll() // Hacer públicos los endpoints SOAP
+            .requestMatchers("/api/search/**").permitAll() // Hacer público el endpoint de búsqueda categorizada
+            .requestMatchers("/api/youtube/**").permitAll() // Hacer público el endpoint de YouTube
+            .requestMatchers("/api/player/**").permitAll() // Hacer públicos los endpoints del reproductor
             .anyRequest().authenticated())
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .userDetailsService(userDetailsService) // Usar directamente UserDetailsService
