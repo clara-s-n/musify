@@ -12,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Servicio de autenticación de usuarios.
@@ -148,5 +149,51 @@ public class AuthService {
     }
   }
 
+  /**
+   * Registra un nuevo usuario en el sistema.
+   * 
+   * @param username Nombre de usuario
+   * @param email    Email del usuario
+   * @param password Contraseña del usuario (se codificará)
+   * @return El usuario creado
+   * @throws AuthenticationException si el usuario o email ya existen
+   */
+  @Transactional
+  public AppUser register(String username, String email, String password) {
+    // Verificar si el usuario ya existe
+    if (userRepository.findByUsername(username).isPresent()) {
+      logger.warn("Intento de registro con username existente: {}", username);
+      throw new AuthenticationException("El nombre de usuario ya existe");
+    }
 
+    // Verificar si el email ya existe
+    if (userRepository.findByEmail(email).isPresent()) {
+      logger.warn("Intento de registro con email existente: {}", email);
+      throw new AuthenticationException("El email ya está registrado");
+    }
+
+    try {
+      // Crear nuevo usuario
+      AppUser user = new AppUser();
+      user.setUsername(username);
+      user.setEmail(email);
+      user.setPassword(passwordEncoder.encode(password)); // Codificar contraseña
+      user.setEnabled(true);
+
+      // Guardar usuario
+      user = userRepository.save(user);
+
+      // Asignar rol de usuario
+      AppRole role = new AppRole();
+      role.setUsername(username);
+      role.setRole("USER");
+      roleRepository.save(role);
+
+      logger.info("Usuario registrado exitosamente: {}", username);
+      return user;
+    } catch (Exception e) {
+      logger.error("Error al registrar usuario: {}", e.getMessage(), e);
+      throw new AuthenticationException("Error al registrar usuario: " + e.getMessage(), e);
+    }
+  }
 }
