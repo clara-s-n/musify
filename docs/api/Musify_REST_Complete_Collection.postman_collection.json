@@ -30,8 +30,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
             },
             "description": "Registra un nuevo usuario en el sistema. Requiere username, email y password únicos."
           }
@@ -68,8 +74,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
             },
             "description": "Inicia sesión con usuario de prueba. Guarda automáticamente el token JWT en variable de entorno."
           }
@@ -106,8 +118,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
             },
             "description": "Login con usuario administrador. Guarda automáticamente el token JWT."
           }
@@ -125,8 +143,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/music/spotify/search?q=jazz&limit=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["music", "spotify", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "music",
+                "spotify",
+                "search"
+              ],
               "query": [
                 {
                   "key": "q",
@@ -150,8 +174,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/music/spotify/random?limit=5",
-              "host": ["{{baseUrl}}"],
-              "path": ["music", "spotify", "random"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "music",
+                "spotify",
+                "random"
+              ],
               "query": [
                 {
                   "key": "limit",
@@ -170,8 +200,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/music/spotify/play/4iV5W9uYEdYUVa79Axb7Rh",
-              "host": ["{{baseUrl}}"],
-              "path": ["music", "spotify", "play", "4iV5W9uYEdYUVa79Axb7Rh"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "music",
+                "spotify",
+                "play",
+                "4iV5W9uYEdYUVa79Axb7Rh"
+              ],
               "variable": [
                 {
                   "key": "trackId",
@@ -196,8 +233,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/tracks",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tracks"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tracks"
+              ]
             },
             "description": "Obtiene la lista de todas las canciones almacenadas en la base de datos local."
           }
@@ -209,8 +251,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/tracks/1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tracks", "1"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tracks",
+                "1"
+              ]
             },
             "description": "Obtiene información detallada de una canción específica por su ID local."
           }
@@ -235,8 +283,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/tracks",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tracks"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tracks"
+              ]
             },
             "description": "Crea una nueva canción en la base de datos. Requiere autenticación JWT."
           }
@@ -261,8 +314,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/tracks/1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tracks", "1"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tracks",
+                "1"
+              ]
             },
             "description": "Actualiza una canción existente. Requiere autenticación JWT."
           }
@@ -279,8 +338,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/tracks/1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tracks", "1"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tracks",
+                "1"
+              ]
             },
             "description": "Elimina una canción de la base de datos. Requiere autenticación JWT."
           }
@@ -311,8 +376,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/playback/start",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "playback", "start"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "playback",
+                "start"
+              ]
             },
             "description": "Inicia la reproducción de una canción. Implementa patrones de resilencia (Circuit Breaker, Retry). Procesamiento asíncrono."
           }
@@ -329,8 +400,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/playback/pause",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "playback", "pause"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "playback",
+                "pause"
+              ]
             },
             "description": "Pausa la reproducción actual. Procesamiento asíncrono."
           }
@@ -347,8 +424,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/playback/resume",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "playback", "resume"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "playback",
+                "resume"
+              ]
             },
             "description": "Reanuda la reproducción pausada. Procesamiento asíncrono."
           }
@@ -365,8 +448,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/playback/stop",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "playback", "stop"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "playback",
+                "stop"
+              ]
             },
             "description": "Detiene completamente la reproducción. Procesamiento asíncrono."
           }
@@ -383,8 +472,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/playback/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "playback", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "playback",
+                "status"
+              ]
             },
             "description": "Obtiene el estado actual de reproducción (playing, paused, stopped)."
           }
@@ -402,8 +497,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/actuator/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["actuator", "health"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
             },
             "description": "Endpoint de salud de Spring Boot Actuator. Verifica el estado de la aplicación y dependencias."
           }
@@ -415,8 +515,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/actuator/health/db",
-              "host": ["{{baseUrl}}"],
-              "path": ["actuator", "health", "db"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "health",
+                "db"
+              ]
             },
             "description": "Información detallada de salud de la base de datos."
           }
@@ -428,8 +534,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/actuator/info",
-              "host": ["{{baseUrl}}"],
-              "path": ["actuator", "info"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "info"
+              ]
             },
             "description": "Información general de la aplicación."
           }
@@ -441,8 +552,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/actuator/metrics",
-              "host": ["{{baseUrl}}"],
-              "path": ["actuator", "metrics"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "metrics"
+              ]
             },
             "description": "Métricas disponibles de la aplicación."
           }
@@ -460,8 +576,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/v3/api-docs",
-              "host": ["{{baseUrl}}"],
-              "path": ["v3", "api-docs"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v3",
+                "api-docs"
+              ]
             },
             "description": "Especificación OpenAPI 3.0 en formato JSON."
           }
@@ -473,8 +594,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/swagger-ui.html",
-              "host": ["{{baseUrl}}"],
-              "path": ["swagger-ui.html"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "swagger-ui.html"
+              ]
             },
             "description": "Interfaz web Swagger UI para explorar y probar la API."
           }
