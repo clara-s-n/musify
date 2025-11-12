@@ -99,25 +99,61 @@ export class LoginComponent implements OnInit {
     this.authService.login(email, password).subscribe({
       next: (response) => {
         console.log('Login exitoso:', response);
-        this.successMessage.set('Inicio de sesión exitoso');
+        this.successMessage.set('¡Inicio de sesión exitoso! Redirigiendo...');
 
         // Actualizamos el estado de autenticación
         this.updateAuthStatus();
 
-        // Redirigir al usuario a la página solicitada o al home
-        this.router.navigateByUrl(this.returnUrl);
+        // Esperamos un momento para que el usuario vea el mensaje de éxito
+        setTimeout(() => {
+          this.successMessage.set('');
+          this.router.navigateByUrl(this.returnUrl);
+        }, 800);
       },
       error: (error) => {
         console.error('Error en login:', error);
-        this.errorMessage.set(error.message || 'Error al iniciar sesión');
+        
+        // Mensaje de error más específico
+        let errorMsg = 'Error al iniciar sesión';
+        if (error.status === 401) {
+          errorMsg = 'Credenciales inválidas. Por favor verifica tu email y contraseña.';
+        } else if (error.status === 0) {
+          errorMsg = 'No se pudo conectar con el servidor. Por favor verifica tu conexión.';
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+        
+        this.errorMessage.set(errorMsg);
+        
+        // Mostrar el mensaje de error durante 2.5 segundos y luego recargar la página
+        setTimeout(() => {
+          this.errorMessage.set('');
+          // Limpiar el formulario antes de recargar
+          this.loginForm.reset();
+          // Recargar la página para restablecer el estado
+          window.location.reload();
+        }, 2500);
       }
     });
   }
 
   onRegister(): void {
-    // This would be implemented when backend register endpoint is used
-    // For now, just show a message that registration is not available
-    this.errorMessage.set('Registration is not available yet');
+    // Reset messages
+    this.errorMessage.set('');
+    this.successMessage.set('');
+
+    if (this.registerForm.invalid) {
+      this.errorMessage.set('Por favor completa todos los campos correctamente');
+      return;
+    }
+
+    // TODO: Implement registration when backend is ready
+    this.errorMessage.set('El registro no está disponible en este momento. Por favor contacta al administrador.');
+    
+    // Limpiar el mensaje después de 5 segundos
+    setTimeout(() => {
+      this.errorMessage.set('');
+    }, 5000);
   }
 
   /**
@@ -136,14 +172,31 @@ export class LoginComponent implements OnInit {
       this.updateAuthStatus();
 
       // Show success message
-      this.successMessage.set('Logged out successfully');
+      this.successMessage.set('Sesión cerrada exitosamente');
 
-      // Redirect to login page
-      this.router.navigateByUrl('/login');
+      // Limpiar formulario
+      this.loginForm.reset();
+
+      // Limpiar el mensaje después de 3 segundos
+      setTimeout(() => {
+        this.successMessage.set('');
+      }, 3000);
+
     } catch (error) {
       console.error('Error during logout:', error);
-      this.errorMessage.set('Error during logout');
+      this.errorMessage.set('Error al cerrar sesión');
     }
+  }
+
+  /**
+   * Helper methods for template validation
+   */
+  isLoginButtonDisabled(): boolean {
+    return this.loginForm.invalid || this.loading();
+  }
+
+  isRegisterButtonDisabled(): boolean {
+    return this.registerForm.invalid || this.loading();
   }
 
   private initForms(): void {
