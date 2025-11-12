@@ -1,20 +1,28 @@
 <div class="page">
   <header class="header-top">
-    <app-logo></app-logo>
-    <div class="header-controls">
+    <div class="header-main">
+      <app-logo></app-logo>
+      
       <!-- Search Mode Toggle -->
       <div class="search-mode-toggle">
         <button (click)="toggleSearchMode()" class="toggle-btn" [class.active]="!showEnhancedSearch">
-          🔍 Búsqueda Simple
+          🔍 Simple
         </button>
         <button (click)="toggleSearchMode()" class="toggle-btn" [class.active]="showEnhancedSearch">
-          🎯 Búsqueda Avanzada
+          🎯 Avanzada
         </button>
       </div>
 
       <!-- Simple Search -->
       <div *ngIf="!showEnhancedSearch" class="simple-search">
         <search-bar (searchResults)="searchHome($event)"></search-bar>
+      </div>
+
+      <!-- User Menu Placeholder -->
+      <div class="user-menu">
+        <button class="user-avatar">
+          <span class="avatar-icon">👤</span>
+        </button>
       </div>
     </div>
 
@@ -50,16 +58,6 @@
       </div>
     </section>
   </main>
-
-  <!-- Music Player (Always visible) -->
-  <footer class="player-section">
-    <app-music-player></app-music-player>
-
-    <!-- Fallback Audio Player (for compatibility) -->
-    <div class="fallback-player" *ngIf="audioURL">
-      <audio class="reproductor" [src]="audioURL" controls autoplay></audio>
-    </div>
-  </footer>
 
   <!-- Development Info Component -->
   <app-dev-info></app-dev-info>

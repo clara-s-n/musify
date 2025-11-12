@@ -107,10 +107,10 @@ export class PlayerService {
     const artist = encodeURIComponent(trackInfo.artist);
     // Usar /stream en lugar de /audio para obtener el audio proxied
     const streamUrl = `${environment.apiUrl}/api/youtube/stream?name=${name}&artist=${artist}`;
-    
+
     // Actualizar el estado con la URL del proxy stream
-    const updatedTrackInfo = { 
-      ...trackInfo, 
+    const updatedTrackInfo = {
+      ...trackInfo,
       audioUrl: streamUrl  // URL del backend proxy, no la URL directa de YouTube
     };
     const updatedState: PlayerState = {

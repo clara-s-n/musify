@@ -49,7 +49,7 @@
 .main-content {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 30px 20px calc(var(--player-h) + 30px);
+  padding: 30px 20px 140px;
   min-height: calc(100vh - var(--header-h));
 }
 
@@ -58,9 +58,9 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: 30px;
+  margin-bottom: 40px;
   padding-bottom: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.15);
 }
 
 .results-info {
@@ -192,7 +192,8 @@
 .results-container.grid-view {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 25px;
+  gap: 30px;
+  margin-bottom: 40px;
 }
 
 .track-card {
@@ -205,6 +206,7 @@
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  margin-bottom: 10px;
 }
 
 .track-card:hover {

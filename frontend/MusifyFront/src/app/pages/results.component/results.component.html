@@ -147,16 +147,5 @@
         <button class="back-btn" (click)="goBack()">Volver al inicio</button>
       </div>
     </div>
-
   </main>
-
-  <!-- Music Player -->
-  <footer class="player-section">
-    <app-music-player></app-music-player>
-
-    <!-- Fallback Player -->
-    <div class="fallback-player" *ngIf="audioURL">
-      <audio class="reproductor" [src]="audioURL" controls autoplay></audio>
-    </div>
-  </footer>
 </body>

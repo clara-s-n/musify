@@ -30,6 +30,7 @@ import { environment } from '../../enviroment/enviroment';
         #audioElement
         [src]="currentAudioUrl || null"
         (loadstart)="onLoadStart()"
+        (loadedmetadata)="onLoadedMetadata($event)"
         (canplay)="onCanPlay()"
         (timeupdate)="onTimeUpdate($event)"
         (ended)="onTrackEnd()"
@@ -37,80 +38,86 @@ import { environment } from '../../enviroment/enviroment';
         preload="metadata"
       ></audio>
 
-      <!-- Controls -->
-      <div class="player-controls">
-        <button 
-          class="control-btn shuffle-btn"
-          [class.active]="playerState.shuffle"
-          (click)="toggleShuffle()"
-          title="Shuffle"
-        >
-          🔀
-        </button>
+      <!-- Center Section: Controls + Progress -->
+      <div class="center-section">
+        <!-- Controls -->
+        <div class="player-controls">
+          <button 
+            class="control-btn shuffle-btn"
+            [class.active]="playerState.shuffle"
+            (click)="toggleShuffle()"
+            title="Shuffle"
+          >
+            🔀
+          </button>
 
-        <button 
-          class="control-btn"
-          (click)="playPrevious()"
-          title="Previous"
-        >
-          ⏮️
-        </button>
+          <button 
+            class="control-btn"
+            (click)="playPrevious()"
+            title="Previous"
+          >
+            ⏮️
+          </button>
 
-        <button 
-          class="control-btn play-pause-btn"
-          (click)="togglePlayPause()"
-          [title]="playerState.status === 'playing' ? 'Pause' : 'Play'"
-        >
-          {{ playerState.status === 'playing' ? '⏸️' : '▶️' }}
-        </button>
+          <button 
+            class="control-btn play-pause-btn"
+            (click)="togglePlayPause()"
+            [title]="playerState.status === 'playing' ? 'Pause' : 'Play'"
+          >
+            {{ playerState.status === 'playing' ? '⏸️' : '▶️' }}
+          </button>
 
-        <button 
-          class="control-btn"
-          (click)="playNext()"
-          title="Next"
-        >
-          ⏭️
-        </button>
+          <button 
+            class="control-btn"
+            (click)="playNext()"
+            title="Next"
+          >
+            ⏭️
+          </button>
 
-        <button 
-          class="control-btn repeat-btn"
-          [class.active]="playerState.repeat"
-          (click)="toggleRepeat()"
-          title="Repeat"
-        >
-          🔁
-        </button>
+          <button 
+            class="control-btn repeat-btn"
+            [class.active]="playerState.repeat"
+            (click)="toggleRepeat()"
+            title="Repeat"
+          >
+            🔁
+          </button>
+        </div>
 
+        <!-- Progress Bar -->
+        <div class="progress-section">
+          <span class="time-display">{{ formatTime(currentPosition) }}</span>
+          <div class="progress-bar-container">
+            <div class="progress-bar">
+              <div 
+                class="progress-fill"
+                [style.width.%]="progressPercentage"
+              ></div>
+              <input 
+                type="range"
+                class="progress-slider"
+                min="0"
+                [max]="playerState.duration || 100"
+                [value]="currentPosition"
+                (input)="onSeek($event)"
+              >
+            </div>
+          </div>
+          <span class="time-display">{{ formatTime(playerState.duration) }}</span>
+        </div>
+      </div>
+
+      <!-- Right Section: Download Button -->
+      <div class="right-section">
         <button 
           class="control-btn download-btn"
           (click)="downloadTrack()"
           [disabled]="!currentAudioUrl"
           title="Download"
         >
-          ⬇️
+          ⬇️ Descargar
         </button>
-      </div>
-
-      <!-- Progress Bar -->
-      <div class="progress-section">
-        <span class="time-display">{{ formatTime(currentPosition) }}</span>
-        <div class="progress-bar-container">
-          <div class="progress-bar">
-            <div 
-              class="progress-fill"
-              [style.width.%]="progressPercentage"
-            ></div>
-            <input 
-              type="range"
-              class="progress-slider"
-              min="0"
-              [max]="playerState.duration || 100"
-              [value]="currentPosition"
-              (input)="onSeek($event)"
-            >
-          </div>
-        </div>
-        <span class="time-display">{{ formatTime(playerState.duration) }}</span>
       </div>
 
       <!-- Queue Display (Hidden for compact player) -->
@@ -128,61 +135,57 @@ import { environment } from '../../enviroment/enviroment';
         </div>
       </div> -->
 
-      <!-- Loading/Error States -->
-      <div class="player-status" *ngIf="isLoading">
-        <p>🎵 Cargando música...</p>
+      <!-- Loading/Error States (Compact) -->
+      <div class="player-status-compact" *ngIf="isLoading">
+        <div class="loading-spinner"></div>
+        <span class="loading-text">Cargando...</span>
       </div>
 
-      <div class="player-status error" *ngIf="playerState.status === 'error'">
-        <p>❌ Error al reproducir la canción</p>
-      </div>
-      
-      <!-- Debug info (remove in production) -->
-      <div class="player-status debug" *ngIf="!currentAudioUrl && playerState.currentTrack && !isLoading">
-        <p>⚠️ No hay URL de audio disponible para esta canción</p>
-        <small>Preview URL: {{ playerState.currentTrack.audioUrl || 'No disponible' }}</small>
+      <div class="player-status-compact error" *ngIf="playerState.status === 'error' && !isLoading">
+        <span>❌ Error</span>
       </div>
     </div>
   `,
   styles: [`
     .music-player {
-      background: linear-gradient(135deg, rgba(30, 60, 114, 0.9), rgba(42, 82, 152, 0.9));
+      background: linear-gradient(135deg, rgba(30, 60, 114, 0.95), rgba(42, 82, 152, 0.95));
       color: white;
-      padding: 15px 20px;
-      display: flex;
+      padding: 10px 20px;
+      display: grid;
+      grid-template-columns: minmax(200px, 280px) auto minmax(180px, 220px);
       align-items: center;
-      justify-content: space-between;
-      gap: 20px;
+      gap: 30px;
       height: 100%;
       backdrop-filter: blur(15px);
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
     }
 
     .track-info {
       display: flex;
       align-items: center;
-      gap: 15px;
-      flex: 0 0 300px;
-      min-width: 250px;
+      gap: 12px;
+      min-width: 0;
     }
 
     .track-image {
-      width: 60px;
-      height: 60px;
-      border-radius: 8px;
+      width: 48px;
+      height: 48px;
+      border-radius: 6px;
       object-fit: cover;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.3);
       flex-shrink: 0;
     }
 
     .track-details {
       flex: 1;
       min-width: 0;
+      overflow: hidden;
     }
 
     .track-details h3 {
-      margin: 0 0 4px 0;
-      font-size: 1em;
-      font-weight: bold;
+      margin: 0 0 3px 0;
+      font-size: 0.9em;
+      font-weight: 600;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -190,33 +193,48 @@ import { environment } from '../../enviroment/enviroment';
 
     .track-details p {
       margin: 0;
-      opacity: 0.8;
-      font-size: 0.9em;
+      opacity: 0.75;
+      font-size: 0.8em;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    .center-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .right-section {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      min-width: 0;
     }
 
     .player-controls {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 10px;
-      flex: 0 0 auto;
+      gap: 8px;
     }
 
     .control-btn {
       background: rgba(255, 255, 255, 0.2);
       border: none;
       border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      font-size: 1em;
+      width: 38px;
+      height: 38px;
+      font-size: 0.95em;
       cursor: pointer;
       transition: all 0.3s ease;
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
     }
 
     .control-btn:hover {
@@ -240,11 +258,20 @@ import { environment } from '../../enviroment/enviroment';
     }
 
     .download-btn {
-      background: rgba(76, 175, 80, 0.3);
+      background: rgba(76, 175, 80, 0.4);
+      border-radius: 20px;
+      padding: 8px 16px;
+      width: auto;
+      height: auto;
+      font-size: 0.9em;
+      font-weight: 500;
+      white-space: nowrap;
     }
 
     .download-btn:hover:not(:disabled) {
-      background: rgba(76, 175, 80, 0.5);
+      background: rgba(76, 175, 80, 0.6);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
     }
 
     .play-pause-btn {
@@ -257,15 +284,14 @@ import { environment } from '../../enviroment/enviroment';
     .progress-section {
       display: flex;
       align-items: center;
-      gap: 12px;
-      flex: 1;
-      max-width: 500px;
+      gap: 10px;
+      width: 100%;
     }
 
     .progress-bar-container {
       flex: 1;
       position: relative;
-      padding: 5px 0;
+      padding: 3px 0;
     }
 
     .progress-bar {
@@ -323,12 +349,18 @@ import { environment } from '../../enviroment/enviroment';
 
     .time-display {
       font-size: 0.85em;
-      opacity: 0.9;
-      min-width: 45px;
+      opacity: 1;
+      min-width: 42px;
       text-align: center;
-      font-weight: 500;
+      font-weight: 600;
       font-family: 'Courier New', monospace;
       letter-spacing: 0.5px;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+      background: rgba(0, 0, 0, 0.2);
+      padding: 4px 8px;
+      border-radius: 4px;
+      flex-shrink: 0;
     }
 
     .queue-section {
@@ -386,6 +418,43 @@ import { environment } from '../../enviroment/enviroment';
       font-size: 0.8em;
     }
 
+    /* Compact Loading Status */
+    .player-status-compact {
+      position: absolute;
+      top: 50%;
+      right: 20px;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 20px;
+      font-size: 0.85em;
+      z-index: 10;
+    }
+
+    .player-status-compact.error {
+      background: rgba(255, 0, 0, 0.3);
+    }
+
+    .loading-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #4CAF50;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 500;
+    }
     .player-status small {
       display: block;
       opacity: 0.7;
@@ -420,7 +489,7 @@ import { environment } from '../../enviroment/enviroment';
 })
 export class MusicPlayerComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('audioElement', { static: false }) audioElementRef!: ElementRef<HTMLAudioElement>;
-  
+
   playerState: PlayerState = {
     status: 'stopped',
     currentTrack: null,
@@ -513,7 +582,7 @@ export class MusicPlayerComponent implements OnInit, AfterViewInit, OnDestroy {
    */
   togglePlayPause(): void {
     const audioEl = this.audioElement;
-    
+
     if (!audioEl) {
       console.error('❌ Audio element not available yet. Waiting for initialization...');
       // Intentar nuevamente en el próximo tick
@@ -533,15 +602,15 @@ export class MusicPlayerComponent implements OnInit, AfterViewInit, OnDestroy {
       audioEl.pause();
     } else {
       console.log('▶️ Starting playback via user interaction');
-      
+
       // Verificar que tengamos URL antes de intentar reproducir
       if (!this.currentAudioUrl) {
         alert('No hay audio disponible para reproducir. Selecciona una canción primero.');
         return;
       }
-      
+
       this.playerService.resume().subscribe();
-      
+
       // User interaction allows play() to succeed
       audioEl.play()
         .then(() => {
@@ -583,12 +652,40 @@ export class MusicPlayerComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
+   * Evento cuando se cargan los metadatos del audio (incluida la duración)
+   */
+  onLoadedMetadata(event: Event): void {
+    const audio = event.target as HTMLAudioElement;
+    if (audio.duration && audio.duration !== Infinity && !isNaN(audio.duration)) {
+      const duration = audio.duration * 1000; // Convertir a ms
+      this.playerState = {
+        ...this.playerState,
+        duration: duration
+      };
+      console.log('📊 Metadata loaded - Duration:', this.formatTime(duration));
+    }
+  }
+
+  /**
    * Evento cuando se puede reproducir el audio
    */
   onCanPlay(): void {
     this.isLoading = false;
-    console.log('Audio ready to play, current status:', this.playerState.status);
-    
+
+    // Capturar la duración del audio cuando esté disponible
+    if (this.audioElement && this.audioElement.duration &&
+      this.audioElement.duration !== Infinity &&
+      !isNaN(this.audioElement.duration)) {
+      const duration = this.audioElement.duration * 1000; // Convertir a ms
+      this.playerState = {
+        ...this.playerState,
+        duration: duration
+      };
+      console.log('Audio ready to play, duration:', this.formatTime(duration), 'current status:', this.playerState.status);
+    } else {
+      console.log('Audio ready to play, current status:', this.playerState.status);
+    }
+
     // Intentar reproducir si el estado es 'playing'
     if (this.playerState.status === 'playing' && this.audioElement) {
       this.audioElement.play()
@@ -613,20 +710,20 @@ export class MusicPlayerComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const track = this.playerState.currentTrack;
     const fileName = `${track.artist} - ${track.name}.mp3`;
-    
+
     console.log('Downloading track:', fileName);
-    
+
     // Crear un elemento <a> temporal para descargar
     const link = document.createElement('a');
     link.href = this.currentAudioUrl;
     link.download = fileName;
     link.target = '_blank';
-    
+
     // Agregar al DOM, hacer clic y remover
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     console.log('Download initiated for:', fileName);
   }
 
@@ -643,6 +740,17 @@ export class MusicPlayerComponent implements OnInit, AfterViewInit, OnDestroy {
   onTimeUpdate(event: Event): void {
     const audio = event.target as HTMLAudioElement;
     this.currentPosition = audio.currentTime * 1000; // Convertir a ms
+
+    // Actualizar la duración si no está establecida o es diferente
+    if (audio.duration && audio.duration !== Infinity && !isNaN(audio.duration)) {
+      const newDuration = audio.duration * 1000; // Convertir a ms
+      if (this.playerState.duration !== newDuration) {
+        this.playerState = {
+          ...this.playerState,
+          duration: newDuration
+        };
+      }
+    }
   }
 
   /**
@@ -677,13 +785,13 @@ export class MusicPlayerComponent implements OnInit, AfterViewInit, OnDestroy {
    */
   onAudioError(event: Event): void {
     const audioElement = event.target as HTMLAudioElement;
-    
+
     // Ignorar error de src vacío (código 4 = MEDIA_ELEMENT_ERROR)
     if (audioElement.error?.code === 4 && !audioElement.currentSrc) {
       // Este error es esperado cuando aún no hay URL de audio
       return;
     }
-    
+
     console.error('Audio playback error:', {
       currentSrc: audioElement.currentSrc,
       error: audioElement.error,
