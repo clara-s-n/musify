@@ -15,17 +15,16 @@ html,
 body {
   height: 100%;
   margin: 0;
-  background-image: url('/assets/images/background.png');
-  /* Center and scale the image nicely */
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
 }
 
 body.page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-image: url('/assets/images/background.png');
+  /* Center and scale the image nicely */
+  background-position: center;
+  background-size: cover;
   /*background-position: center center;
   background-repeat: no-repeat;
    background-size: cover;

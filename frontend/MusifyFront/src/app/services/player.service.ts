@@ -102,33 +102,26 @@ export class PlayerService {
 
     this.updateState(initialState);
 
-    // Obtener URL de audio de YouTube de forma asíncrona
+    // Usar endpoint proxy del backend para evitar tracking prevention
     const name = encodeURIComponent(trackInfo.name);
     const artist = encodeURIComponent(trackInfo.artist);
-    const youtubeUrl = `${environment.backendUrl}/api/youtube/audio?name=${name}&artist=${artist}`;
-
-    // Llamar al backend para obtener la URL de audio
-    this.http.get(youtubeUrl, { responseType: 'text' }).subscribe({
-      next: (audioUrl) => {
-        if (audioUrl && audioUrl.startsWith('http')) {
-          // Actualizar el estado con la URL de audio
-          const updatedTrackInfo = { ...trackInfo, audioUrl };
-          const updatedState: PlayerState = {
-            ...initialState,
-            currentTrack: updatedTrackInfo
-          };
-          this.updateState(updatedState);
-          console.log('Audio URL obtained for:', trackInfo.name, audioUrl.substring(0, 80) + '...');
-        }
-      },
-      error: (error) => {
-        console.error('Error getting YouTube audio URL:', error);
-        // Mantener el estado sin audioUrl, el MusicPlayerComponent manejará el fallback
-      }
-    });
+    // Usar /stream en lugar de /audio para obtener el audio proxied
+    const streamUrl = `${environment.apiUrl}/api/youtube/stream?name=${name}&artist=${artist}`;
+    
+    // Actualizar el estado con la URL del proxy stream
+    const updatedTrackInfo = { 
+      ...trackInfo, 
+      audioUrl: streamUrl  // URL del backend proxy, no la URL directa de YouTube
+    };
+    const updatedState: PlayerState = {
+      ...initialState,
+      currentTrack: updatedTrackInfo
+    };
+    this.updateState(updatedState);
+    console.log('Using proxied stream URL for:', trackInfo.name);
 
     return new Observable(observer => {
-      observer.next(initialState);
+      observer.next(updatedState);
       observer.complete();
     });
   }

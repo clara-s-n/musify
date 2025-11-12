@@ -1,6 +1,27 @@
 <div class="page">
   <header class="header-top">
     <app-logo></app-logo>
+    <div class="header-controls">
+      <!-- Search Mode Toggle -->
+      <div class="search-mode-toggle">
+        <button (click)="toggleSearchMode()" class="toggle-btn" [class.active]="!showEnhancedSearch">
+          🔍 Búsqueda Simple
+        </button>
+        <button (click)="toggleSearchMode()" class="toggle-btn" [class.active]="showEnhancedSearch">
+          🎯 Búsqueda Avanzada
+        </button>
+      </div>
+
+      <!-- Simple Search -->
+      <div *ngIf="!showEnhancedSearch" class="simple-search">
+        <search-bar (searchResults)="searchHome($event)"></search-bar>
+      </div>
+    </div>
+
+    <!-- Enhanced Search (Full Width) -->
+    <div *ngIf="showEnhancedSearch" class="enhanced-search-container">
+      <app-enhanced-search></app-enhanced-search>
+    </div>
   </header>
 
   <!-- Main Content (Only show when not in enhanced search mode) -->

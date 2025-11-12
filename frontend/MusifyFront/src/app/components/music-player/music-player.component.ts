@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { PlayerService, PlayerState, TrackInfo } from '../../services/player.service';
@@ -28,7 +28,7 @@ import { environment } from '../../enviroment/enviroment';
       <!-- Audio Element (Hidden) -->
       <audio 
         #audioElement
-        [src]="currentAudioUrl"
+        [src]="currentAudioUrl || null"
         (loadstart)="onLoadStart()"
         (canplay)="onCanPlay()"
         (timeupdate)="onTimeUpdate($event)"
@@ -79,6 +79,15 @@ import { environment } from '../../enviroment/enviroment';
           title="Repeat"
         >
           🔁
+        </button>
+
+        <button 
+          class="control-btn download-btn"
+          (click)="downloadTrack()"
+          [disabled]="!currentAudioUrl"
+          title="Download"
+        >
+          ⬇️
         </button>
       </div>
 
@@ -220,6 +229,24 @@ import { environment } from '../../enviroment/enviroment';
       box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
     }
 
+    .control-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .control-btn:disabled:hover {
+      transform: none;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .download-btn {
+      background: rgba(76, 175, 80, 0.3);
+    }
+
+    .download-btn:hover:not(:disabled) {
+      background: rgba(76, 175, 80, 0.5);
+    }
+
     .play-pause-btn {
       width: 48px;
       height: 48px;
@@ -230,29 +257,58 @@ import { environment } from '../../enviroment/enviroment';
     .progress-section {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       flex: 1;
-      max-width: 400px;
+      max-width: 500px;
     }
 
     .progress-bar-container {
       flex: 1;
       position: relative;
+      padding: 5px 0;
     }
 
     .progress-bar {
-      height: 6px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 3px;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
       position: relative;
-      overflow: hidden;
+      overflow: visible;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+      cursor: pointer;
+    }
+
+    .progress-bar:hover {
+      height: 10px;
+      margin-top: -1px;
     }
 
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
-      border-radius: 3px;
-      transition: width 0.3s ease;
+      background: linear-gradient(90deg, #1db954, #1ed760, #4ecdc4);
+      border-radius: 4px;
+      transition: width 0.1s linear;
+      box-shadow: 0 2px 8px rgba(29, 185, 84, 0.4);
+      position: relative;
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 12px;
+      height: 12px;
+      background: white;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .progress-bar:hover .progress-fill::after {
+      opacity: 1;
     }
 
     .progress-slider {
@@ -266,10 +322,13 @@ import { environment } from '../../enviroment/enviroment';
     }
 
     .time-display {
-      font-size: 0.9em;
-      opacity: 0.8;
-      min-width: 40px;
+      font-size: 0.85em;
+      opacity: 0.9;
+      min-width: 45px;
       text-align: center;
+      font-weight: 500;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.5px;
     }
 
     .queue-section {
@@ -359,7 +418,9 @@ import { environment } from '../../enviroment/enviroment';
     }
   `]
 })
-export class MusicPlayerComponent implements OnInit, OnDestroy {
+export class MusicPlayerComponent implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild('audioElement', { static: false }) audioElementRef!: ElementRef<HTMLAudioElement>;
+  
   playerState: PlayerState = {
     status: 'stopped',
     currentTrack: null,
@@ -376,7 +437,11 @@ export class MusicPlayerComponent implements OnInit, OnDestroy {
   isLoading = false;
 
   private subscription: Subscription = new Subscription();
-  private audioElement?: HTMLAudioElement;
+
+  // Getter para acceder al elemento de audio
+  private get audioElement(): HTMLAudioElement | null {
+    return this.audioElementRef?.nativeElement || null;
+  }
 
   constructor(
     private playerService: PlayerService,
@@ -387,10 +452,26 @@ export class MusicPlayerComponent implements OnInit, OnDestroy {
     // Suscribirse al estado del reproductor
     this.subscription.add(
       this.playerService.playerState$.subscribe(state => {
+        const previousTrack = this.playerState.currentTrack;
         this.playerState = state;
-        this.loadAudioForCurrentTrack();
+
+        // Solo actualizar el audio si cambió la canción o si tenemos una nueva URL
+        if (this.playerState.currentTrack) {
+          const trackChanged = !previousTrack || previousTrack.id !== this.playerState.currentTrack.id;
+          const hasNewAudioUrl = this.playerState.currentTrack.audioUrl &&
+            this.currentAudioUrl !== this.playerState.currentTrack.audioUrl;
+
+          if (trackChanged || hasNewAudioUrl) {
+            this.updateAudioFromState();
+          }
+        }
       })
     );
+  }
+
+  ngAfterViewInit(): void {
+    // El elemento audio está ahora disponible
+    console.log('Audio element initialized:', this.audioElement ? 'Available' : 'Not available');
   }
 
   ngOnDestroy(): void {
@@ -398,58 +479,32 @@ export class MusicPlayerComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga la URL de audio para la canción actual
+   * Actualiza la URL de audio desde el estado del PlayerService
    */
-  private async loadAudioForCurrentTrack(): Promise<void> {
+  private updateAudioFromState(): void {
     if (!this.playerState.currentTrack) {
+      this.currentAudioUrl = '';
       return;
     }
 
-    this.isLoading = true;
-    console.log('Loading audio for track:', this.playerState.currentTrack.name);
+    // Si el PlayerService ya tiene la URL de audio, usarla
+    if (this.playerState.currentTrack.audioUrl && this.playerState.currentTrack.audioUrl.startsWith('http')) {
+      console.log('Using audio URL from PlayerService:', this.playerState.currentTrack.audioUrl.substring(0, 80) + '...');
+      this.currentAudioUrl = this.playerState.currentTrack.audioUrl;
+      this.isLoading = false;
 
-    try {
-      // Extraer nombre del artista y nombre de la canción
-      const artistName = this.playerState.currentTrack.artist || 'Unknown Artist';
-      const trackName = this.playerState.currentTrack.name || 'Unknown Track';
-
-      console.log(`Requesting YouTube audio for: "${trackName}" by "${artistName}"`);
-
-      // Llamar directamente al endpoint de YouTube usando HTTPS para evitar timeouts de NGINX
-      const youtubeUrl = `https://${window.location.hostname}:8443/api/youtube/audio?name=${encodeURIComponent(trackName)}&artist=${encodeURIComponent(artistName)}`;
-      const response = await fetch(youtubeUrl, {
-        method: 'GET',
-        // Ignorar certificados SSL auto-firmados en desarrollo
-        // En producción, esto debería manejarse con certificados válidos
-      });
-
-      if (response.ok) {
-        const audioUrl = await response.text();
-        if (audioUrl && audioUrl.startsWith('http')) {
-          console.log('YouTube audio URL obtained:', audioUrl.substring(0, 80) + '...');
-          this.currentAudioUrl = audioUrl;
-          this.isLoading = false;
-          return;
+      // Intentar reproducir automáticamente
+      setTimeout(() => {
+        if (this.audioElement && this.playerState.status === 'playing') {
+          this.audioElement.play().catch(err => {
+            console.warn('Auto-play prevented by browser:', err);
+          });
         }
-      }
-
-      // Fallback: intentar usar la URL de preview de Spotify si está disponible
-      if (this.playerState.currentTrack.audioUrl) {
-        console.log('Fallback to Spotify preview URL:', this.playerState.currentTrack.audioUrl);
-        this.currentAudioUrl = this.playerState.currentTrack.audioUrl;
-        this.isLoading = false;
-        return;
-      }
-
-      // Si nada funciona, marcar como error
-      console.warn('No audio URL available from any source');
-      this.currentAudioUrl = '';
-      this.isLoading = false;
-
-    } catch (error) {
-      console.error('Error loading audio URL:', error);
-      this.currentAudioUrl = '';
-      this.isLoading = false;
+      }, 100);
+    } else {
+      // Si no hay URL aún, mostrar estado de carga
+      console.log('Waiting for audio URL from PlayerService...');
+      this.isLoading = true;
     }
   }
 
@@ -457,12 +512,45 @@ export class MusicPlayerComponent implements OnInit, OnDestroy {
    * Toggle play/pause
    */
   togglePlayPause(): void {
+    const audioEl = this.audioElement;
+    
+    if (!audioEl) {
+      console.error('❌ Audio element not available yet. Waiting for initialization...');
+      // Intentar nuevamente en el próximo tick
+      setTimeout(() => {
+        if (this.audioElement) {
+          this.togglePlayPause();
+        } else {
+          alert('El reproductor de audio aún no está listo. Espera un momento e intenta de nuevo.');
+        }
+      }, 100);
+      return;
+    }
+
     if (this.playerState.status === 'playing') {
+      console.log('🛑 Pausing playback');
       this.playerService.pause().subscribe();
-      this.audioElement?.pause();
+      audioEl.pause();
     } else {
+      console.log('▶️ Starting playback via user interaction');
+      
+      // Verificar que tengamos URL antes de intentar reproducir
+      if (!this.currentAudioUrl) {
+        alert('No hay audio disponible para reproducir. Selecciona una canción primero.');
+        return;
+      }
+      
       this.playerService.resume().subscribe();
-      this.audioElement?.play();
+      
+      // User interaction allows play() to succeed
+      audioEl.play()
+        .then(() => {
+          console.log('✅ Playback started successfully via user click');
+        })
+        .catch(error => {
+          console.error('❌ Error starting playback:', error);
+          alert(`No se pudo iniciar la reproducción:\n${error.message}\n\nURL: ${this.currentAudioUrl.substring(0, 80)}...`);
+        });
     }
   }
 
@@ -499,9 +587,47 @@ export class MusicPlayerComponent implements OnInit, OnDestroy {
    */
   onCanPlay(): void {
     this.isLoading = false;
-    if (this.playerState.status === 'playing') {
-      this.audioElement?.play();
+    console.log('Audio ready to play, current status:', this.playerState.status);
+    
+    // Intentar reproducir si el estado es 'playing'
+    if (this.playerState.status === 'playing' && this.audioElement) {
+      this.audioElement.play()
+        .then(() => {
+          console.log('Audio playing successfully');
+        })
+        .catch(err => {
+          console.warn('Auto-play prevented by browser. User interaction required:', err);
+          // Puedes mostrar un mensaje al usuario para que haga clic en play
+        });
     }
+  }
+
+  /**
+   * Descarga la canción actual
+   */
+  downloadTrack(): void {
+    if (!this.currentAudioUrl || !this.playerState.currentTrack) {
+      console.warn('No audio URL available for download');
+      return;
+    }
+
+    const track = this.playerState.currentTrack;
+    const fileName = `${track.artist} - ${track.name}.mp3`;
+    
+    console.log('Downloading track:', fileName);
+    
+    // Crear un elemento <a> temporal para descargar
+    const link = document.createElement('a');
+    link.href = this.currentAudioUrl;
+    link.download = fileName;
+    link.target = '_blank';
+    
+    // Agregar al DOM, hacer clic y remover
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    console.log('Download initiated for:', fileName);
   }
 
   /**
@@ -550,7 +676,26 @@ export class MusicPlayerComponent implements OnInit, OnDestroy {
    * Error de audio
    */
   onAudioError(event: Event): void {
-    console.error('Audio error:', event);
+    const audioElement = event.target as HTMLAudioElement;
+    
+    // Ignorar error de src vacío (código 4 = MEDIA_ELEMENT_ERROR)
+    if (audioElement.error?.code === 4 && !audioElement.currentSrc) {
+      // Este error es esperado cuando aún no hay URL de audio
+      return;
+    }
+    
+    console.error('Audio playback error:', {
+      currentSrc: audioElement.currentSrc,
+      error: audioElement.error,
+      networkState: audioElement.networkState,
+      readyState: audioElement.readyState
+    });
+
+    // Limpiar la URL de audio con error
+    if (this.currentAudioUrl) {
+      console.warn('Failed to load audio from:', this.currentAudioUrl.substring(0, 80) + '...');
+    }
+
     this.isLoading = false;
   }
 
@@ -573,15 +718,5 @@ export class MusicPlayerComponent implements OnInit, OnDestroy {
     const seconds = totalSeconds % 60;
 
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  }
-
-  /**
-   * Referencia al elemento de audio después de la vista inicializada
-   */
-  ngAfterViewInit(): void {
-    const audioElement = document.querySelector('audio') as HTMLAudioElement;
-    if (audioElement) {
-      this.audioElement = audioElement;
-    }
   }
 }
