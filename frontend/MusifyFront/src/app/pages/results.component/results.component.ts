@@ -1,7 +1,9 @@
 import { Component, effect, inject, input, OnInit } from '@angular/core';
 import { SearchBarComponent } from '../../components/search-bar.component/search-bar.component';
+import { EnhancedSearchComponent } from '../../components/enhanced-search/enhanced-search.component';
 import { SpotifyTrack } from '../../models/spotify-track-model';
 import { LogoComponent } from '../../components/logo.component/logo.component';
+import { UserMenuComponent } from '../../components/user-menu/user-menu.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -11,7 +13,7 @@ import { MusicPlayerComponent } from '../../components/music-player/music-player
 
 @Component({
   selector: 'app-results',
-  imports: [LogoComponent, SearchBarComponent, CommonModule, FormsModule, MusicPlayerComponent],
+  imports: [LogoComponent, SearchBarComponent, EnhancedSearchComponent, UserMenuComponent, CommonModule, FormsModule, MusicPlayerComponent],
   templateUrl: './results.component.html',
   styleUrl: './results.component.css',
 })
@@ -27,6 +29,7 @@ export class ResultsComponent {
   sortBy: 'name' | 'artist' | 'popularity' = 'name';
   isLoading: boolean = false;
   searchQuery: string = '';
+  showEnhancedSearch: boolean = false;
 
   constructor() {
     const nav = this.router.getCurrentNavigation();
@@ -138,6 +141,13 @@ export class ResultsComponent {
     } else {
       console.warn('No se encontró ID del artista para:', track.primaryArtistName || track.artists);
     }
+  }
+
+  /**
+   * Cambia entre modo de búsqueda simple y avanzada
+   */
+  toggleSearchMode(): void {
+    this.showEnhancedSearch = !this.showEnhancedSearch;
   }
 
   /**

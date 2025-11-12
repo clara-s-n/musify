@@ -18,12 +18,13 @@
         <search-bar (searchResults)="searchHome($event)"></search-bar>
       </div>
 
-      <!-- User Menu Placeholder -->
+      <!-- User Menu -->
       <div class="user-menu-container">
         <app-user-menu></app-user-menu>
       </div>
     </div>
-    <!-- Enhanced Search (Full Width) -->
+
+    <!-- Enhanced Search (Full Width, outside header-main) -->
     <div *ngIf="showEnhancedSearch" class="enhanced-search-container">
       <app-enhanced-search></app-enhanced-search>
     </div>

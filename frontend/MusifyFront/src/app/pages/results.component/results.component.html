@@ -3,9 +3,30 @@
   <header class="header-top">
     <div class="header-content">
       <app-logo></app-logo>
-      <div class="search-section">
+      
+      <!-- Search Mode Toggle -->
+      <div class="search-mode-toggle">
+        <button (click)="toggleSearchMode()" class="toggle-btn" [class.active]="!showEnhancedSearch">
+          🔍 Simple
+        </button>
+        <button (click)="toggleSearchMode()" class="toggle-btn" [class.active]="showEnhancedSearch">
+          🎯 Avanzada
+        </button>
+      </div>
+
+      <!-- Simple Search -->
+      <div *ngIf="!showEnhancedSearch" class="search-section">
         <search-bar (searchResults)="onSearchResults($event)"></search-bar>
       </div>
+
+      <div class="user-menu-container">
+        <app-user-menu></app-user-menu>
+      </div>
+    </div>
+
+    <!-- Enhanced Search (Full Width, outside header-content) -->
+    <div *ngIf="showEnhancedSearch" class="enhanced-search-container">
+      <app-enhanced-search></app-enhanced-search>
     </div>
   </header>
 
