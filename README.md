@@ -25,6 +25,7 @@
 ```
 📱 Frontend: Angular 17 + Material Design
 🔧 Backend:  Spring Boot 3 + JWT + Resilience4j
+🌐 APIs:     REST + SOAP (Spring Boot Starter Web Services)
 🗄️ Database: PostgreSQL (2 tablas optimizadas)
 🎵 Music API: Spotify Web API (oficial)
 🐳 Deploy:   Docker Compose + NGINX
@@ -71,6 +72,8 @@ docker compose up --build
 - 🌐 **Frontend**: http://localhost:4200
 - 🔧 **API Backend**: http://localhost:8080  
 - 📊 **Swagger UI**: http://localhost:8080/swagger-ui.html
+- 🧼 **SOAP WSDL (Auth)**: http://localhost:8080/ws/auth.wsdl
+- 🧼 **SOAP WSDL (Music)**: http://localhost:8080/ws/music.wsdl
 - ❤️ **Health Check**: http://localhost:8080/actuator/health
 
 ## 🔐 Credenciales de Prueba
@@ -84,6 +87,60 @@ docker compose up --build
 | `premium@musify.com` | `premium789` | USER, PREMIUM | Testing premium |
 
 > 📖 **Más usuarios disponibles en**: [`docs/database/README_DATABASE_OPTIMIZED.md`](docs/database/README_DATABASE_OPTIMIZED.md)
+
+## 🧼 API SOAP (Web Services)
+
+La aplicación incluye **endpoints SOAP** además de REST para demostrar integración con servicios web tradicionales:
+
+### **Endpoints Disponibles**
+
+#### 🔐 **Auth Service** (`/ws/auth.wsdl`)
+```xml
+<!-- Login Request -->
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+                  xmlns:web="http://tfu.com/backend/webservice">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <web:loginRequest>
+         <web:email>user@demo.com</web:email>
+         <web:password>password</web:password>
+      </web:loginRequest>
+   </soapenv:Body>
+</soapenv:Envelope>
+```
+
+#### 🎵 **Music Service** (`/ws/music.wsdl`)
+```xml
+<!-- Search Tracks Request -->
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+                  xmlns:web="http://tfu.com/backend/webservice">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <web:searchTracksRequest>
+         <web:query>Lana Del Rey</web:query>
+         <web:limit>5</web:limit>
+      </web:searchTracksRequest>
+   </soapenv:Body>
+</soapenv:Envelope>
+```
+
+### **Testing SOAP**
+
+```bash
+# Ejecutar script de demo completo
+./scripts/demo_soap_complete.sh
+
+# Probar con curl
+curl -X POST http://localhost:8080/ws \
+  -H "Content-Type: text/xml" \
+  -d @request.xml
+```
+
+> 📖 **Guías detalladas**:
+> - [`docs/api/SOAP_Usage_Guide.md`](docs/api/SOAP_Usage_Guide.md) - Uso completo de SOAP
+> - [`docs/api/SOAP_XML_API_Guide.md`](docs/api/SOAP_XML_API_Guide.md) - Ejemplos XML
+> - [`SOAP_QUICK_START.md`](SOAP_QUICK_START.md) - Inicio rápido
+> - Colección Postman: [`docs/api/Musify_Complete_API_Collection.postman_collection.json`](docs/api/Musify_Complete_API_Collection.postman_collection.json)
 
 ## 🛠️ Patrones Arquitectónicos Implementados
 
@@ -119,6 +176,7 @@ docker compose up --build
 ./scripts/demo_security.sh       # Rate Limiting + JWT
 ./scripts/demo_performance.sh    # Cache + Async Processing
 ./scripts/demo_health.sh         # Health Monitoring
+./scripts/demo_soap_complete.sh  # Endpoints SOAP (Auth + Music)
 ```
 
 > 📖 **Guía completa**: [`docs/demos/GUIA_RAPIDA_DEMOS.md`](docs/demos/GUIA_RAPIDA_DEMOS.md)
@@ -128,11 +186,13 @@ docker compose up --build
 Este proyecto es ideal para aprender:
 
 - ✅ **Arquitectura de Microservicios** con Spring Boot
+- ✅ **APIs REST y SOAP** (integración de múltiples protocolos)
 - ✅ **Patrones de Resiliencia** (Circuit Breaker, Retry, Bulkhead)
 - ✅ **Seguridad en APIs** (JWT, Rate Limiting, CORS)
 - ✅ **Integración con APIs externas** (Spotify Web API)
 - ✅ **Containerización** con Docker y Docker Compose
 - ✅ **Frontend-Backend separation** con Angular + REST API
+- ✅ **Web Services SOAP** con Spring WS y WSDL
 - ✅ **Base de datos optimizada** (PostgreSQL con solo lo esencial)
 - ✅ **Documentación técnica** estructurada
 
@@ -140,6 +200,8 @@ Este proyecto es ideal para aprender:
 
 ### **🔍 Para Desarrolladores**
 - [`docs/api/Musify_API_Testing_Guide.md`](docs/api/Musify_API_Testing_Guide.md) - Testing con Postman/curl
+- [`docs/api/SOAP_Usage_Guide.md`](docs/api/SOAP_Usage_Guide.md) - Guía de uso SOAP
+- [`docs/api/SOAP_XML_API_Guide.md`](docs/api/SOAP_XML_API_Guide.md) - Ejemplos XML SOAP
 - [`docs/database/README_DATABASE_OPTIMIZED.md`](docs/database/README_DATABASE_OPTIMIZED.md) - Estructura de BD
 - [`docs/spotify/Spotify_API_Integration_Guide.md`](docs/spotify/Spotify_API_Integration_Guide.md) - Integración Spotify
 
@@ -154,8 +216,10 @@ Este proyecto es ideal para aprender:
 ## 📊 Métricas del Proyecto
 
 ### **Backend Optimizado**
-- **Endpoints**: 11 (eliminados 24 huérfanos)
+- **Endpoints REST**: 11 (eliminados 24 huérfanos)
+- **Endpoints SOAP**: 2 (Auth + Music Search)
 - **Controladores**: 2 (AuthController + SpotifyController)
+- **Web Services**: 2 (AuthService + MusicService)
 - **Entidades JPA**: 2 (AppUser + AppRole)
 - **Patrones**: 8+ patrones arquitectónicos implementados
 

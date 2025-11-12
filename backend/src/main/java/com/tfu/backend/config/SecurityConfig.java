@@ -71,6 +71,7 @@ public class SecurityConfig {
             .requestMatchers("/api/search/**").permitAll() // Hacer público el endpoint de búsqueda categorizada
             .requestMatchers("/api/youtube/**").permitAll() // Hacer público el endpoint de YouTube
             .requestMatchers("/api/player/**").permitAll() // Hacer públicos los endpoints del reproductor
+            .requestMatchers("/soap/**").permitAll() // Hacer públicos los endpoints SOAP/XML
             .anyRequest().authenticated())
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .userDetailsService(userDetailsService) // Usar directamente UserDetailsService
