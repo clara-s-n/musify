@@ -112,7 +112,7 @@ export class LoginComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error en login:', error);
-        
+
         // Mensaje de error más específico
         let errorMsg = 'Error al iniciar sesión';
         if (error.status === 401) {
@@ -122,9 +122,9 @@ export class LoginComponent implements OnInit {
         } else if (error.message) {
           errorMsg = error.message;
         }
-        
+
         this.errorMessage.set(errorMsg);
-        
+
         // Mostrar el mensaje de error durante 2.5 segundos y luego recargar la página
         setTimeout(() => {
           this.errorMessage.set('');
@@ -149,7 +149,7 @@ export class LoginComponent implements OnInit {
 
     // TODO: Implement registration when backend is ready
     this.errorMessage.set('El registro no está disponible en este momento. Por favor contacta al administrador.');
-    
+
     // Limpiar el mensaje después de 5 segundos
     setTimeout(() => {
       this.errorMessage.set('');
