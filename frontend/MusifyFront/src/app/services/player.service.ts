@@ -91,7 +91,8 @@ export class PlayerService {
       duration: 0
     };
 
-    const newState: PlayerState = {
+    // Crear estado inicial (sin audioUrl aún)
+    const initialState: PlayerState = {
       ...currentState,
       status: 'playing',
       currentTrack: trackInfo,
@@ -99,9 +100,35 @@ export class PlayerService {
       position: 0
     };
 
-    this.updateState(newState);
+    this.updateState(initialState);
+
+    // Obtener URL de audio de YouTube de forma asíncrona
+    const name = encodeURIComponent(trackInfo.name);
+    const artist = encodeURIComponent(trackInfo.artist);
+    const youtubeUrl = `${environment.backendUrl}/api/youtube/audio?name=${name}&artist=${artist}`;
+
+    // Llamar al backend para obtener la URL de audio
+    this.http.get(youtubeUrl, { responseType: 'text' }).subscribe({
+      next: (audioUrl) => {
+        if (audioUrl && audioUrl.startsWith('http')) {
+          // Actualizar el estado con la URL de audio
+          const updatedTrackInfo = { ...trackInfo, audioUrl };
+          const updatedState: PlayerState = {
+            ...initialState,
+            currentTrack: updatedTrackInfo
+          };
+          this.updateState(updatedState);
+          console.log('Audio URL obtained for:', trackInfo.name, audioUrl.substring(0, 80) + '...');
+        }
+      },
+      error: (error) => {
+        console.error('Error getting YouTube audio URL:', error);
+        // Mantener el estado sin audioUrl, el MusicPlayerComponent manejará el fallback
+      }
+    });
+
     return new Observable(observer => {
-      observer.next(newState);
+      observer.next(initialState);
       observer.complete();
     });
   }
