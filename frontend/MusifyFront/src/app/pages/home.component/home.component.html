@@ -2,7 +2,7 @@
   <header class="header-top">
     <div class="header-main">
       <app-logo></app-logo>
-      
+
       <!-- Search Mode Toggle -->
       <div class="search-mode-toggle">
         <button (click)="toggleSearchMode()" class="toggle-btn" [class.active]="!showEnhancedSearch">
@@ -19,13 +19,10 @@
       </div>
 
       <!-- User Menu Placeholder -->
-      <div class="user-menu">
-        <button class="user-avatar">
-          <span class="avatar-icon">👤</span>
-        </button>
+      <div class="user-menu-container">
+        <app-user-menu></app-user-menu>
       </div>
     </div>
-
     <!-- Enhanced Search (Full Width) -->
     <div *ngIf="showEnhancedSearch" class="enhanced-search-container">
       <app-enhanced-search></app-enhanced-search>

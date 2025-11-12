@@ -13,6 +13,7 @@ import { User } from '../../models/auth.model';
       <div class="user-info" (click)="toggleDropdown()">
         <div class="user-avatar">
           {{ getUserInitials() }}
+           <span class="avatar-icon">👤</span>
         </div>
         <span class="user-name">{{ currentUser.username || currentUser.email }}</span>
         <span class="dropdown-arrow" [class.rotated]="isDropdownOpen">▼</span>

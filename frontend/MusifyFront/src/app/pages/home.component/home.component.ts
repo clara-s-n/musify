@@ -11,6 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 import { LogoComponent } from '../../components/logo.component/logo.component';
 import { Router } from '@angular/router';
 import { YoutubeService } from '../../services/youtube.service';
+import { UserMenuComponent } from '../../components/user-menu/user-menu.component';
 
 @Component({
   selector: 'app-home',
@@ -21,7 +22,8 @@ import { YoutubeService } from '../../services/youtube.service';
     MusicPlayerComponent,
     DevInfoComponent,
     MatCardModule,
-    LogoComponent
+    LogoComponent,
+    UserMenuComponent
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
