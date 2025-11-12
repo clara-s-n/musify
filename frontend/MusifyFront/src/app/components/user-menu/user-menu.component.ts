@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -12,7 +12,6 @@ import { User } from '../../models/auth.model';
     <div class="user-menu" *ngIf="currentUser">
       <div class="user-info" (click)="toggleDropdown()">
         <div class="user-avatar">
-          {{ getUserInitials() }}
            <span class="avatar-icon">👤</span>
         </div>
         <span class="user-name">{{ currentUser.username || currentUser.email }}</span>
@@ -254,22 +253,16 @@ export class UserMenuComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private router: Router
-  ) { }
-
-  ngOnInit(): void {
-    // Subscribe to current user changes
-    this.authService.getCurrentUser().valueOf();
-    // Note: In a real app, you'd use effect() or computed() with signals
-    // For now, we'll use a simple approach
-    this.getCurrentUser();
+  ) {
+    // Use effect to reactively update when user changes
+    effect(() => {
+      const userSignal = this.authService.getCurrentUser();
+      this.currentUser = userSignal();
+    });
   }
 
-  /**
-   * Get current user from auth service
-   */
-  private getCurrentUser(): void {
-    const userSignal = this.authService.getCurrentUser();
-    this.currentUser = userSignal() as User;
+  ngOnInit(): void {
+    // Initial load is handled by effect in constructor
   }
 
   /**
