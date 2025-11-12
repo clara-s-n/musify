@@ -148,5 +148,52 @@ public class AuthService {
     }
   }
 
+  /**
+   * Registra un nuevo usuario en el sistema.
+   * 
+   * @param username Nombre de usuario
+   * @param email Email del usuario
+   * @param password Contraseña del usuario
+   * @return El usuario creado
+   * @throws AuthenticationException si el usuario o email ya existen
+   */
+  public AppUser register(String username, String email, String password) {
+    try {
+      logger.debug("Intentando registrar nuevo usuario: {}", email);
+
+      // Verificar si el email ya existe
+      if (userRepository.findByEmail(email).isPresent()) {
+        logger.warn("Intento de registro con email existente: {}", email);
+        throw new AuthenticationException("El email ya está registrado");
+      }
+
+      // Verificar si el username ya existe
+      if (userRepository.findByUsername(username).isPresent()) {
+        logger.warn("Intento de registro con username existente: {}", username);
+        throw new AuthenticationException("El nombre de usuario ya está en uso");
+      }
+
+      // Crear nuevo usuario
+      AppUser newUser = new AppUser();
+      newUser.setUsername(username);
+      newUser.setEmail(email);
+      // Codificar la contraseña con BCrypt
+      newUser.setPassword(passwordEncoder.encode(password));
+      newUser.setEnabled(true);
+
+      // Guardar en la base de datos
+      AppUser savedUser = userRepository.save(newUser);
+      logger.info("Usuario registrado exitosamente: {}", email);
+
+      return savedUser;
+
+    } catch (AuthenticationException e) {
+      throw e;
+    } catch (Exception e) {
+      logger.error("Error inesperado durante registro: {}", e.getMessage(), e);
+      throw new AuthenticationException("Error al registrar usuario: " + e.getMessage(), e);
+    }
+  }
+
 
 }

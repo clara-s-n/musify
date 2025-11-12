@@ -128,6 +128,55 @@ public class AuthController {
     }
   }
 
+  /**
+   * Endpoint para registro de nuevo usuario.
+   * 
+   * @param req Datos de registro (username, email y password)
+   * @return Información del usuario creado y token JWT
+   */
+  @Operation(summary = "Registrar nuevo usuario", description = "Crea una nueva cuenta de usuario y devuelve un token JWT")
+  @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+      @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Usuario registrado exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = RegisterResponse.class))),
+      @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos de registro inválidos o usuario ya existe", content = @Content(mediaType = "application/json")),
+      @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error interno del servidor", content = @Content(mediaType = "application/json"))
+  })
+  @PostMapping("/register")
+  public ResponseEntity<ApiResponse<RegisterResponse>> register(@Valid @RequestBody RegisterRequest req) {
+    try {
+      logger.debug("Intento de registro para: {}", req.email());
+
+      // Registrar el usuario
+      AppUser newUser = authService.register(req.username(), req.email(), req.password());
+
+      // Cargar detalles del usuario para generar token
+      UserDetails userDetails = userDetailsService.loadUserByUsername(newUser.getUsername());
+
+      // Generar token JWT
+      String token = jwtService.createToken(userDetails);
+
+      // Crear respuesta
+      RegisterResponse response = new RegisterResponse(
+          newUser.getId(),
+          newUser.getUsername(),
+          newUser.getEmail(),
+          token
+      );
+
+      logger.info("Registro exitoso para: {}", req.email());
+      return ResponseEntity.status(HttpStatus.CREATED)
+          .body(ApiResponse.success(response, "Usuario registrado exitosamente"));
+
+    } catch (AuthenticationException e) {
+      logger.warn("Error en registro: {}", e.getMessage());
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body(ApiResponse.error("Error en registro", e.getMessage()));
+    } catch (Exception e) {
+      logger.error("Error inesperado durante registro: {}", e.getMessage(), e);
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(ApiResponse.error("Error interno del servidor", "Error al procesar la solicitud de registro"));
+    }
+  }
+
 
 }
 

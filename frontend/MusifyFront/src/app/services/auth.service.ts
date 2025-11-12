@@ -96,6 +96,61 @@ export class AuthService {
   }
 
   /**
+   * Register a new user
+   * @param username User's username
+   * @param email User email
+   * @param password User password
+   * @returns Observable of the auth response containing user data and JWT token
+   */
+  register(username: string, email: string, password: string): Observable<any> {
+    const registerRequest = { username, email, password };
+    this.loadingSubject.next(true);
+
+    console.log('Attempting registration to:', `${this.API_URL}/register`);
+
+    return this.http.post<any>(`${this.API_URL}/register`, registerRequest)
+      .pipe(
+        tap(response => {
+          console.log('Register response:', response);
+
+          // Verificar si la respuesta fue exitosa
+          if (!response || response.error) {
+            console.error('Error en respuesta de registro:', response);
+            throw new Error(response?.message || response?.error || 'Error en el registro');
+          }
+
+          // Extraer el token de la respuesta
+          let token = null;
+
+          if (response.data?.accessToken) {
+            token = response.data.accessToken;
+          } else if (response.accessToken) {
+            token = response.accessToken;
+          }
+
+          if (!token) {
+            console.error('No se encontró token en la respuesta de registro', response);
+            throw new Error('Error en el registro: No se recibió token');
+          }
+
+          console.log('Usuario registrado, token extraído correctamente');
+
+          // Guardar token en sessionStorage
+          sessionStorage.setItem(this.TOKEN_KEY, token);
+
+          // Actualizar información del usuario
+          this.setUserFromToken(token);
+        }),
+        map(response => {
+          if (response.data) return response.data;
+          return response;
+        }),
+        catchError(this.handleError),
+        tap(() => this.loadingSubject.next(false))
+      );
+  }
+
+  /**
    * Logout user and clear stored data
    */
   logout(): Observable<any> {

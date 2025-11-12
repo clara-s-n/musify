@@ -147,16 +147,50 @@ export class LoginComponent implements OnInit {
       return;
     }
 
-    // TODO: Implement registration when backend is ready
-    this.errorMessage.set('El registro no está disponible en este momento. Por favor contacta al administrador.');
+    const { username, email, password } = this.registerForm.value;
 
-    // Limpiar el mensaje después de 5 segundos
-    setTimeout(() => {
-      this.errorMessage.set('');
-    }, 5000);
-  }
+    console.log('Intentando registrar usuario:', email);
 
-  /**
+    this.authService.register(username, email, password).subscribe({
+      next: (response) => {
+        console.log('Registro exitoso:', response);
+        this.successMessage.set('¡Registro exitoso! Redirigiendo...');
+
+        // Actualizamos el estado de autenticación
+        this.updateAuthStatus();
+
+        // Esperamos un momento para que el usuario vea el mensaje de éxito
+        setTimeout(() => {
+          this.successMessage.set('');
+          this.router.navigateByUrl(this.returnUrl);
+        }, 800);
+      },
+      error: (error) => {
+        console.error('Error en registro:', error);
+        
+        // Mensaje de error más específico
+        let errorMsg = 'Error al registrar usuario';
+        if (error.status === 400) {
+          errorMsg = error.message || 'El email o nombre de usuario ya están en uso.';
+        } else if (error.status === 0) {
+          errorMsg = 'No se pudo conectar con el servidor. Por favor verifica tu conexión.';
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+        
+        this.errorMessage.set(errorMsg);
+        
+        // Mostrar el mensaje de error durante 2.5 segundos y luego recargar la página
+        setTimeout(() => {
+          this.errorMessage.set('');
+          // Limpiar el formulario antes de recargar
+          this.registerForm.reset();
+          // Recargar la página para restablecer el estado
+          window.location.reload();
+        }, 2500);
+      }
+    });
+  }  /**
    * Handle user logout
    */
   onLogout(): void {
