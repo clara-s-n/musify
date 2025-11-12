@@ -68,118 +68,163 @@ export class PlayerService {
   /**
    * Reproduce una canción específica
    */
-  play(trackId: string): Observable<PlayerState> {
-    return this.http.post<ApiResponse<PlayerState>>(`${this.apiUrl}/play?trackId=${trackId}`, {})
-      .pipe(
-        map(response => {
-          this.updateState(response.data);
-          return response.data;
-        })
-      );
+  play(trackId: string, trackData?: any): Observable<PlayerState> {
+    // Trabajar localmente sin backend para player
+    const currentState = this.playerStateSubject.value;
+
+    // Si tenemos trackData, usarlo; sino, crear uno básico
+    const trackInfo: TrackInfo = trackData ? {
+      id: trackData.id || trackId,
+      name: trackData.name || 'Unknown Track',
+      artist: trackData.artists || trackData.artist || 'Unknown Artist',
+      album: trackData.album || 'Unknown Album',
+      imageUrl: trackData.imageUrl || 'https://via.placeholder.com/200x200?text=🎵',
+      audioUrl: '', // Se obtendrá del backend YouTube
+      duration: trackData.duration || 0
+    } : {
+      id: trackId,
+      name: 'Unknown Track',
+      artist: 'Unknown Artist',
+      album: 'Unknown Album',
+      imageUrl: 'https://via.placeholder.com/200x200?text=🎵',
+      audioUrl: '',
+      duration: 0
+    };
+
+    const newState: PlayerState = {
+      ...currentState,
+      status: 'playing',
+      currentTrack: trackInfo,
+      currentIndex: 0,
+      position: 0
+    };
+
+    this.updateState(newState);
+    return new Observable(observer => {
+      observer.next(newState);
+      observer.complete();
+    });
   }
 
   /**
    * Reproduce la siguiente canción
    */
   playNext(): Observable<PlayerState> {
-    return this.http.post<ApiResponse<PlayerState>>(`${this.apiUrl}/next`, {})
-      .pipe(
-        map(response => {
-          this.updateState(response.data);
-          return response.data;
-        })
-      );
+    const currentState = this.playerStateSubject.value;
+    const newState = { ...currentState };
+
+    if (currentState.queue.length > 0 && currentState.currentIndex < currentState.queue.length - 1) {
+      newState.currentIndex = currentState.currentIndex + 1;
+      newState.currentTrack = currentState.queue[newState.currentIndex];
+      newState.position = 0;
+    }
+
+    this.updateState(newState);
+    return new Observable(observer => {
+      observer.next(newState);
+      observer.complete();
+    });
   }
 
   /**
    * Reproduce la canción anterior
    */
   playPrevious(): Observable<PlayerState> {
-    return this.http.post<ApiResponse<PlayerState>>(`${this.apiUrl}/previous`, {})
-      .pipe(
-        map(response => {
-          this.updateState(response.data);
-          return response.data;
-        })
-      );
+    const currentState = this.playerStateSubject.value;
+    const newState = { ...currentState };
+
+    if (currentState.queue.length > 0 && currentState.currentIndex > 0) {
+      newState.currentIndex = currentState.currentIndex - 1;
+      newState.currentTrack = currentState.queue[newState.currentIndex];
+      newState.position = 0;
+    }
+
+    this.updateState(newState);
+    return new Observable(observer => {
+      observer.next(newState);
+      observer.complete();
+    });
   }
 
   /**
    * Pausa la reproducción
    */
   pause(): Observable<PlayerState> {
-    return this.http.post<ApiResponse<PlayerState>>(`${this.apiUrl}/pause`, {})
-      .pipe(
-        map(response => {
-          this.updateState(response.data);
-          return response.data;
-        })
-      );
+    const currentState = this.playerStateSubject.value;
+    const newState = { ...currentState, status: 'paused' as const };
+
+    this.updateState(newState);
+    return new Observable(observer => {
+      observer.next(newState);
+      observer.complete();
+    });
   }
 
   /**
    * Reanuda la reproducción
    */
   resume(): Observable<PlayerState> {
-    return this.http.post<ApiResponse<PlayerState>>(`${this.apiUrl}/resume`, {})
-      .pipe(
-        map(response => {
-          this.updateState(response.data);
-          return response.data;
-        })
-      );
+    const currentState = this.playerStateSubject.value;
+    const newState = { ...currentState, status: 'playing' as const };
+
+    this.updateState(newState);
+    return new Observable(observer => {
+      observer.next(newState);
+      observer.complete();
+    });
   }
 
   /**
    * Detiene la reproducción
    */
   stop(): Observable<PlayerState> {
-    return this.http.post<ApiResponse<PlayerState>>(`${this.apiUrl}/stop`, {})
-      .pipe(
-        map(response => {
-          this.updateState(response.data);
-          return response.data;
-        })
-      );
+    const currentState = this.playerStateSubject.value;
+    const newState = { ...currentState, status: 'stopped' as const, position: 0 };
+
+    this.updateState(newState);
+    return new Observable(observer => {
+      observer.next(newState);
+      observer.complete();
+    });
   }
 
   /**
    * Activa/desactiva shuffle
    */
   toggleShuffle(): Observable<PlayerState> {
-    return this.http.post<ApiResponse<PlayerState>>(`${this.apiUrl}/shuffle`, {})
-      .pipe(
-        map(response => {
-          this.updateState(response.data);
-          return response.data;
-        })
-      );
+    const currentState = this.playerStateSubject.value;
+    const newState = { ...currentState, shuffle: !currentState.shuffle };
+
+    this.updateState(newState);
+    return new Observable(observer => {
+      observer.next(newState);
+      observer.complete();
+    });
   }
 
   /**
    * Activa/desactiva repeat
    */
   toggleRepeat(): Observable<PlayerState> {
-    return this.http.post<ApiResponse<PlayerState>>(`${this.apiUrl}/repeat`, {})
-      .pipe(
-        map(response => {
-          this.updateState(response.data);
-          return response.data;
-        })
-      );
+    const currentState = this.playerStateSubject.value;
+    const newState = { ...currentState, repeat: !currentState.repeat };
+
+    this.updateState(newState);
+    return new Observable(observer => {
+      observer.next(newState);
+      observer.complete();
+    });
   }
 
   /**
    * Obtiene el estado actual del reproductor
    */
   getState(): Observable<PlayerState> {
-    return this.http.get<ApiResponse<PlayerState>>(`${this.apiUrl}/state`)
-      .pipe(
-        map(response => {
-          this.updateState(response.data);
-          return response.data;
-        })
-      );
+    const currentState = this.playerStateSubject.value;
+    return new Observable(observer => {
+      observer.next(currentState);
+      observer.complete();
+    });
   }
 
   /**
@@ -190,14 +235,11 @@ export class PlayerService {
   }
 
   /**
-   * Refresca el estado desde el servidor
+   * Refresca el estado desde el servidor (no usado en modo local)
    */
   private refreshState(): void {
-    this.getState().subscribe({
-      error: (error) => {
-        console.error('Error refreshing player state:', error);
-      }
-    });
+    // No hacer nada en modo local
+    console.log('Player working in local mode - no server refresh needed');
   }
 
   /**

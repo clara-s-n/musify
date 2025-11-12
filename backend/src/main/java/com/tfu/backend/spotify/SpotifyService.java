@@ -160,22 +160,39 @@ public class SpotifyService {
   @CircuitBreaker(name = "spotifyApi", fallbackMethod = "searchTracksFallback")
   @Cacheable(value = "searchTracks", key = "#query + '_' + #limit")
   public List<SpotifyTrackDto> searchTracks(String query, int limit) {
+    System.out.println("Searching tracks for: " + query + " with limit: " + limit);
+    
     HttpHeaders headers = getAuthHeaders();
     HttpEntity<String> entity = new HttpEntity<>(headers);
 
+    // Limpiar y preparar la query
+    String cleanQuery = query.trim().replaceAll("[\"'`]", "");
+    
+    // Crear una búsqueda más simple y efectiva
+    String searchUrl = String.format(
+      "https://api.spotify.com/v1/search?q=%s&type=track&limit=%d&market=US",
+      java.net.URLEncoder.encode(cleanQuery, java.nio.charset.StandardCharsets.UTF_8),
+      limit
+    );
+    
+    System.out.println("Making search request to: " + searchUrl);
+
     ResponseEntity<SpotifySearchResponse> response = restTemplate.exchange(
-        "https://api.spotify.com/v1/search?q=" + query + "&type=track&limit=" + limit,
+        searchUrl,
         HttpMethod.GET,
         entity,
         SpotifySearchResponse.class);
 
     if (response.getBody() != null && response.getBody().getTracks() != null) {
-      System.out.println("Search response received: " + response.getBody());
-      return response.getBody().getTracks().getItems().stream()
+      List<SpotifyTrack> tracks = response.getBody().getTracks().getItems();
+      System.out.println("Found " + tracks.size() + " tracks for query: " + query);
+      
+      return tracks.stream()
           .map(this::convertToDto)
           .collect(Collectors.toList());
     }
 
+    System.out.println("No tracks found for query: " + query);
     return Collections.emptyList();
   }
 
@@ -283,10 +300,22 @@ public class SpotifyService {
   private SpotifyTrackDto convertToDto(SpotifyTrack track) {
     // Safe conversion with null checks
     String artistsString = "";
-    if (track.getArtists() != null) {
+    String primaryArtistId = null;
+    String primaryArtistName = null;
+    String primaryArtistSpotifyUrl = null;
+    
+    if (track.getArtists() != null && !track.getArtists().isEmpty()) {
       artistsString = track.getArtists().stream()
           .map(SpotifyArtist::getName)
           .collect(Collectors.joining(", "));
+      
+      // Obtener información del artista principal (primero en la lista)
+      SpotifyArtist primaryArtist = track.getArtists().get(0);
+      primaryArtistId = primaryArtist.getId();
+      primaryArtistName = primaryArtist.getName();
+      primaryArtistSpotifyUrl = primaryArtist.getExternalUrls() != null 
+          ? primaryArtist.getExternalUrls().get("spotify") 
+          : null;
     }
 
     String albumName = "";
@@ -298,13 +327,20 @@ public class SpotifyService {
       }
     }
 
-    return new SpotifyTrackDto(
+    SpotifyTrackDto dto = new SpotifyTrackDto(
         track.getId(),
         track.getName(),
         artistsString,
         albumName,
         imageUrl,
         track.getPreviewUrl());
+    
+    // Establecer información del artista principal
+    dto.setPrimaryArtistId(primaryArtistId);
+    dto.setPrimaryArtistName(primaryArtistName);
+    dto.setPrimaryArtistSpotifyUrl(primaryArtistSpotifyUrl);
+    
+    return dto;
   }
 
   @Retry(name = "spotifyApi")

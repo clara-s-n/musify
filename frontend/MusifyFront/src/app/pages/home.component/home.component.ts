@@ -53,7 +53,8 @@ export class HomeComponent implements OnInit {
     );
 
     if (track) {
-      this.playerService.play(track.id).subscribe({
+      // Pasar los datos completos del track al PlayerService
+      this.playerService.play(track.id, track).subscribe({
         next: (state: any) => {
           console.log('Track started playing:', state.currentTrack?.name);
         },
@@ -64,8 +65,22 @@ export class HomeComponent implements OnInit {
         }
       });
     } else {
-      // Fallback al método anterior
-      this.youtubeService.getAudio(trackName, trackArtist).subscribe((url: any) => (this.audioURL = url));
+      // Crear un track básico si no se encuentra
+      const basicTrack = {
+        id: Date.now().toString(),
+        name: trackName,
+        artists: trackArtist,
+        imageUrl: 'https://via.placeholder.com/200x200?text=🎵'
+      };
+      this.playerService.play(basicTrack.id, basicTrack).subscribe({
+        next: (state: any) => {
+          console.log('Track started playing:', state.currentTrack?.name);
+        },
+        error: (error: any) => {
+          console.error('Error playing track:', error);
+          this.youtubeService.getAudio(trackName, trackArtist).subscribe((url: any) => (this.audioURL = url));
+        }
+      });
     }
   }
 

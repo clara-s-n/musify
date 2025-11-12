@@ -1,0 +1,7 @@
+<!-- SVG placeholder for artists -->
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="100" cy="100" r="90" fill="#333" stroke="#555" stroke-width="2"/>
+  <circle cx="100" cy="80" r="25" fill="#666"/>
+  <path d="M50 140 Q100 120 150 140 Q150 160 100 160 Q50 160 50 140" fill="#666"/>
+  <text x="100" y="185" text-anchor="middle" fill="#999" font-size="12" font-family="Arial">Artist</text>
+</svg>

@@ -61,7 +61,8 @@ export class ResultsComponent {
    * Reproduce una pista usando el nuevo PlayerService
    */
   playTrack(track: SpotifyTrack): void {
-    this.playerService.play(track.id).subscribe({
+    // Pasar los datos completos del track al PlayerService
+    this.playerService.play(track.id, track).subscribe({
       next: (state: any) => {
         console.log('Track started playing:', state.currentTrack?.name);
       },
@@ -126,6 +127,17 @@ export class ResultsComponent {
   addToQueue(track: SpotifyTrack): void {
     // Esta funcionalidad podría implementarse en el PlayerService
     console.log('Adding to queue:', track.name);
+  }
+
+  /**
+   * Navega al detalle del artista
+   */
+  goToArtist(track: SpotifyTrack): void {
+    if (track.primaryArtistId) {
+      this.router.navigate(['/artist', track.primaryArtistId]);
+    } else {
+      console.warn('No se encontró ID del artista para:', track.primaryArtistName || track.artists);
+    }
   }
 
   /**

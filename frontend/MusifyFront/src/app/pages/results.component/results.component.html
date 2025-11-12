@@ -69,7 +69,16 @@
 
         <div class="track-info">
           <h3 class="track-name" [title]="track.name">{{ track.name }}</h3>
-          <p class="track-artist" [title]="track.artists">{{ track.artists }}</p>
+          <p class="track-artist" [title]="track.artists">
+            <span *ngIf="track.primaryArtistId; else plainArtistText" class="artist-link"
+              (click)="goToArtist(track); $event.stopPropagation()"
+              [title]="'Ver perfil de ' + (track.primaryArtistName || track.artists)">
+              {{ track.artists }}
+            </span>
+            <ng-template #plainArtistText>
+              {{ track.artists }}
+            </ng-template>
+          </p>
           <p class="track-album" [title]="track.album" *ngIf="track.album">{{ track.album }}</p>
         </div>
 
@@ -103,7 +112,14 @@
         </div>
 
         <div class="col-artist">
-          <span>{{ track.artists }}</span>
+          <span *ngIf="track.primaryArtistId; else plainArtistListText" class="artist-link"
+            (click)="goToArtist(track); $event.stopPropagation()"
+            [title]="'Ver perfil de ' + (track.primaryArtistName || track.artists)">
+            {{ track.artists }}
+          </span>
+          <ng-template #plainArtistListText>
+            <span>{{ track.artists }}</span>
+          </ng-template>
         </div>
 
         <div class="col-album">

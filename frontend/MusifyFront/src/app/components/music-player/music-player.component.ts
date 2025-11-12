@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { PlayerService, PlayerState, TrackInfo } from '../../services/player.service';
 import { YoutubeService } from '../../services/youtube.service';
+import { environment } from '../../enviroment/enviroment';
 
 @Component({
   selector: 'app-music-player',
@@ -21,7 +22,6 @@ import { YoutubeService } from '../../services/youtube.service';
         <div class="track-details">
           <h3 class="track-name">{{ playerState.currentTrack.name }}</h3>
           <p class="track-artist">{{ playerState.currentTrack.artist }}</p>
-          <p class="track-album">{{ playerState.currentTrack.album }}</p>
         </div>
       </div>
 
@@ -104,8 +104,8 @@ import { YoutubeService } from '../../services/youtube.service';
         <span class="time-display">{{ formatTime(playerState.duration) }}</span>
       </div>
 
-      <!-- Queue Display (if not empty) -->
-      <div class="queue-section" *ngIf="playerState.queue.length > 1">
+      <!-- Queue Display (Hidden for compact player) -->
+      <!-- <div class="queue-section" *ngIf="playerState.queue.length > 1">
         <h4>En cola ({{ playerState.queue.length }} canciones):</h4>
         <div class="queue-list">
           <div 
@@ -117,7 +117,7 @@ import { YoutubeService } from '../../services/youtube.service';
             <span class="queue-track">{{ track.name }} - {{ track.artist }}</span>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <!-- Loading/Error States -->
       <div class="player-status" *ngIf="isLoading">
@@ -127,60 +127,82 @@ import { YoutubeService } from '../../services/youtube.service';
       <div class="player-status error" *ngIf="playerState.status === 'error'">
         <p>❌ Error al reproducir la canción</p>
       </div>
+      
+      <!-- Debug info (remove in production) -->
+      <div class="player-status debug" *ngIf="!currentAudioUrl && playerState.currentTrack && !isLoading">
+        <p>⚠️ No hay URL de audio disponible para esta canción</p>
+        <small>Preview URL: {{ playerState.currentTrack.audioUrl || 'No disponible' }}</small>
+      </div>
     </div>
   `,
   styles: [`
     .music-player {
-      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      background: linear-gradient(135deg, rgba(30, 60, 114, 0.9), rgba(42, 82, 152, 0.9));
       color: white;
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      max-width: 600px;
-      margin: 0 auto;
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      height: 100%;
+      backdrop-filter: blur(15px);
     }
 
     .track-info {
       display: flex;
       align-items: center;
-      margin-bottom: 20px;
       gap: 15px;
+      flex: 0 0 300px;
+      min-width: 250px;
     }
 
     .track-image {
-      width: 80px;
-      height: 80px;
-      border-radius: 10px;
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
       object-fit: cover;
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      flex-shrink: 0;
+    }
+
+    .track-details {
+      flex: 1;
+      min-width: 0;
     }
 
     .track-details h3 {
-      margin: 0;
-      font-size: 1.4em;
+      margin: 0 0 4px 0;
+      font-size: 1em;
       font-weight: bold;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .track-details p {
-      margin: 5px 0;
+      margin: 0;
       opacity: 0.8;
+      font-size: 0.9em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .player-controls {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 15px;
-      margin-bottom: 20px;
+      gap: 10px;
+      flex: 0 0 auto;
     }
 
     .control-btn {
       background: rgba(255, 255, 255, 0.2);
       border: none;
       border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      font-size: 1.2em;
+      width: 40px;
+      height: 40px;
+      font-size: 1em;
       cursor: pointer;
       transition: all 0.3s ease;
       display: flex;
@@ -199,9 +221,9 @@ import { YoutubeService } from '../../services/youtube.service';
     }
 
     .play-pause-btn {
-      width: 60px;
-      height: 60px;
-      font-size: 1.5em;
+      width: 48px;
+      height: 48px;
+      font-size: 1.2em;
       background: rgba(255, 255, 255, 0.3);
     }
 
@@ -209,7 +231,8 @@ import { YoutubeService } from '../../services/youtube.service';
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 15px;
+      flex: 1;
+      max-width: 400px;
     }
 
     .progress-bar-container {
@@ -299,6 +322,17 @@ import { YoutubeService } from '../../services/youtube.service';
       background: rgba(255, 0, 0, 0.2);
     }
 
+    .player-status.debug {
+      background: rgba(255, 165, 0, 0.2);
+      font-size: 0.8em;
+    }
+
+    .player-status small {
+      display: block;
+      opacity: 0.7;
+      margin-top: 5px;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .music-player {
@@ -366,31 +400,56 @@ export class MusicPlayerComponent implements OnInit, OnDestroy {
   /**
    * Carga la URL de audio para la canción actual
    */
-  private loadAudioForCurrentTrack(): void {
-    if (this.playerState.currentTrack) {
-      this.isLoading = true;
+  private async loadAudioForCurrentTrack(): Promise<void> {
+    if (!this.playerState.currentTrack) {
+      return;
+    }
 
-      // Si ya tiene previewUrl de Spotify, usarla
+    this.isLoading = true;
+    console.log('Loading audio for track:', this.playerState.currentTrack.name);
+
+    try {
+      // Extraer nombre del artista y nombre de la canción
+      const artistName = this.playerState.currentTrack.artist || 'Unknown Artist';
+      const trackName = this.playerState.currentTrack.name || 'Unknown Track';
+
+      console.log(`Requesting YouTube audio for: "${trackName}" by "${artistName}"`);
+
+      // Llamar directamente al endpoint de YouTube usando HTTPS para evitar timeouts de NGINX
+      const youtubeUrl = `https://${window.location.hostname}:8443/api/youtube/audio?name=${encodeURIComponent(trackName)}&artist=${encodeURIComponent(artistName)}`;
+      const response = await fetch(youtubeUrl, {
+        method: 'GET',
+        // Ignorar certificados SSL auto-firmados en desarrollo
+        // En producción, esto debería manejarse con certificados válidos
+      });
+
+      if (response.ok) {
+        const audioUrl = await response.text();
+        if (audioUrl && audioUrl.startsWith('http')) {
+          console.log('YouTube audio URL obtained:', audioUrl.substring(0, 80) + '...');
+          this.currentAudioUrl = audioUrl;
+          this.isLoading = false;
+          return;
+        }
+      }
+
+      // Fallback: intentar usar la URL de preview de Spotify si está disponible
       if (this.playerState.currentTrack.audioUrl) {
+        console.log('Fallback to Spotify preview URL:', this.playerState.currentTrack.audioUrl);
         this.currentAudioUrl = this.playerState.currentTrack.audioUrl;
         this.isLoading = false;
         return;
       }
 
-      // Obtener URL de YouTube como fallback
-      this.youtubeService.getAudio(
-        this.playerState.currentTrack.name,
-        this.playerState.currentTrack.artist
-      ).subscribe({
-        next: (audioUrl: string) => {
-          this.currentAudioUrl = audioUrl;
-          this.isLoading = false;
-        },
-        error: (error: any) => {
-          console.error('Error obtaining audio URL:', error);
-          this.isLoading = false;
-        }
-      });
+      // Si nada funciona, marcar como error
+      console.warn('No audio URL available from any source');
+      this.currentAudioUrl = '';
+      this.isLoading = false;
+
+    } catch (error) {
+      console.error('Error loading audio URL:', error);
+      this.currentAudioUrl = '';
+      this.isLoading = false;
     }
   }
 

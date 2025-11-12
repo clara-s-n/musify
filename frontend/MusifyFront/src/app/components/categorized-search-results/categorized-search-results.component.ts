@@ -12,13 +12,13 @@ import { PlayerService } from '../../services/player.service';
     <div class="search-results" *ngIf="results">
       
       <!-- Songs Section -->
-      <div class="results-section" *ngIf="results.songs && results.songs.length > 0">
+            <div class="results-section" *ngIf="results.songs && results.songs.length > 0">
         <h3 class="section-title">🎵 Canciones</h3>
         <div class="songs-grid">
           <div 
             *ngFor="let song of results.songs" 
             class="song-card"
-            (click)="playTrack(song.id)"
+            (click)="playTrack(song.id, song)"
           >
             <img 
               [src]="song.imageUrl" 
@@ -414,8 +414,9 @@ export class CategorizedSearchResultsComponent {
   /**
    * Reproduce una canción
    */
-  playTrack(trackId: string): void {
-    this.playerService.play(trackId).subscribe({
+  playTrack(trackId: string, track?: any): void {
+    // Si tenemos el track completo, usarlo; sino, usar solo el ID
+    this.playerService.play(trackId, track).subscribe({
       next: (state) => {
         console.log('Track started playing:', state.currentTrack?.name);
       },

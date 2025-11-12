@@ -5,6 +5,11 @@ export interface SpotifyTrack {
   album: string;
   imageUrl: string;
   previewUrl: string | null;
+
+  // Información adicional del artista principal para navegación
+  primaryArtistId?: string;
+  primaryArtistName?: string;
+  primaryArtistSpotifyUrl?: string;
 }
 
 export interface SpotifyPlaybackData {
