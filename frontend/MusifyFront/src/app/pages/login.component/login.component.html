@@ -20,7 +20,7 @@
           [class.is-invalid]="registerForm.get('username')?.invalid && registerForm.get('username')?.touched" />
         <div *ngIf="registerForm.get('username')?.invalid && registerForm.get('username')?.touched"
           class="invalid-feedback">
-          <div *ngIf="registerForm.get('username')?.errors?.['required']">Username is required</div>
+          <div *ngIf="registerForm.get('username')?.errors?.['required']">El nombre de usuario es requerido</div>
         </div>
       </div>
 
@@ -29,26 +29,30 @@
         <input type="email" formControlName="email" placeholder="Email"
           [class.is-invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched" />
         <div *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched" class="invalid-feedback">
-          <div *ngIf="registerForm.get('email')?.errors?.['required']">Email is required</div>
-          <div *ngIf="registerForm.get('email')?.errors?.['email']">Please enter a valid email</div>
+          <div *ngIf="registerForm.get('email')?.errors?.['required']">El email es requerido</div>
+          <div *ngIf="registerForm.get('email')?.errors?.['email']">Por favor ingresa un email válido</div>
         </div>
       </div>
 
       <!-- Password Field -->
       <div class="form-group">
-        <input type="password" formControlName="password" placeholder="Password"
+        <input type="password" formControlName="password" placeholder="Contraseña"
           [class.is-invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched" />
         <div *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
           class="invalid-feedback">
-          <div *ngIf="registerForm.get('password')?.errors?.['required']">Password is required</div>
-          <div *ngIf="registerForm.get('password')?.errors?.['minlength']">Password must be at least 6 characters</div>
+          <div *ngIf="registerForm.get('password')?.errors?.['required']">La contraseña es requerida</div>
+          <div *ngIf="registerForm.get('password')?.errors?.['minlength']">La contraseña debe tener al menos 6
+            caracteres</div>
         </div>
       </div>
 
       <!-- Submit Button -->
-      <button type="submit" [disabled]="registerForm.invalid || loading()">
+      <button type="submit" [disabled]="isRegisterButtonDisabled()">
         <span *ngIf="!loading()">Crear cuenta</span>
-        <span *ngIf="loading()" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        <span *ngIf="loading()">
+          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          Creando...
+        </span>
       </button>
     </form>
   </div>
@@ -72,25 +76,29 @@
         <input type="email" formControlName="email" placeholder="Email"
           [class.is-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" />
         <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" class="invalid-feedback">
-          <div *ngIf="loginForm.get('email')?.errors?.['required']">Email is required</div>
-          <div *ngIf="loginForm.get('email')?.errors?.['email']">Please enter a valid email</div>
+          <div *ngIf="loginForm.get('email')?.errors?.['required']">El email es requerido</div>
+          <div *ngIf="loginForm.get('email')?.errors?.['email']">Por favor ingresa un email válido</div>
         </div>
       </div>
 
       <!-- Password Field -->
       <div class="form-group">
-        <input type="password" formControlName="password" placeholder="Password"
+        <input type="password" formControlName="password" placeholder="Contraseña"
           [class.is-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" />
         <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="invalid-feedback">
-          <div *ngIf="loginForm.get('password')?.errors?.['required']">Password is required</div>
-          <div *ngIf="loginForm.get('password')?.errors?.['minlength']">Password must be at least 6 characters</div>
+          <div *ngIf="loginForm.get('password')?.errors?.['required']">La contraseña es requerida</div>
+          <div *ngIf="loginForm.get('password')?.errors?.['minlength']">La contraseña debe tener al menos 6 caracteres
+          </div>
         </div>
       </div>
 
       <!-- Submit Button -->
-      <button type="submit" [disabled]="loginForm.invalid || loading()">
+      <button type="submit" [disabled]="isLoginButtonDisabled()">
         <span *ngIf="!loading()">Iniciar Sesión</span>
-        <span *ngIf="loading()" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        <span *ngIf="loading()">
+          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          Iniciando...
+        </span>
       </button>
     </form>
 

@@ -7,6 +7,15 @@ server:
     key-store-type: PKCS12
     key-alias: musify
     key-password: ${KEY_PASSWORD:mysecretpassword}
+  # Configuración para streaming de audio (aumentar timeout)
+  tomcat:
+    connection-timeout: 600000  # 10 minutos para streaming
+  servlet:
+    session:
+      timeout: 30m
+  # Configuración async para streaming largo
+  async:
+    request-timeout: 600000  # 10 minutos
 
 ## Nivel de log para la seguridad de Spring
 logging.level.org.springframework.security: WARN

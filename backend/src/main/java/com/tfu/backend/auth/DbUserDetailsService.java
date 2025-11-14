@@ -54,14 +54,13 @@ public class DbUserDetailsService implements UserDetailsService {
       authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getRole()));
     }
 
-    // Crear objeto UserDetails con la información del usuario y sus roles
-    return new User(
+    // Crear objeto CustomUserDetails con toda la información del usuario
+    return new CustomUserDetails(
         user.getUsername(),
         user.getPassword(),
         user.isEnabled(),
-        true, // accountNonExpired
-        true, // credentialsNonExpired
-        true, // accountNonLocked
-        authorities);
+        authorities,
+        user.getEmail(),
+        user.getId());
   }
 }

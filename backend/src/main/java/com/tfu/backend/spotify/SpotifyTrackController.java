@@ -40,6 +40,18 @@ public class SpotifyTrackController {
     return ResponseEntity.ok(ApiResponse.success(tracks, "Canciones aleatorias obtenidas correctamente"));
   }
 
+  @Operation(summary = "Obtener canciones verdaderamente aleatorias", description = "Devuelve un listado de canciones verdaderamente aleatorias usando múltiples estrategias de búsqueda")
+  @ApiResponses(value = {
+      @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Canciones aleatorias obtenidas correctamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SpotifyTrackListResponse.class))),
+      @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Error al obtener canciones", content = @Content(mediaType = "application/json"))
+  })
+  @GetMapping("/truly-random")
+  public ResponseEntity<ApiResponse<List<SpotifyTrackDto>>> getTrulyRandomTracks(
+      @RequestParam(defaultValue = "12") @Min(1) @Max(50) int limit) {
+    List<SpotifyTrackDto> tracks = spotifyService.getTrulyRandomTracks(limit);
+    return ResponseEntity.ok(ApiResponse.success(tracks, "Canciones verdaderamente aleatorias obtenidas correctamente"));
+  }
+
   @Operation(summary = "Buscar canciones", description = "Busca canciones en Spotify según un término de búsqueda")
   @ApiResponses(value = {
       @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Búsqueda realizada correctamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SpotifyTrackListResponse.class))),

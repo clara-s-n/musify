@@ -90,14 +90,28 @@ public class JwtService {
         .map(authority -> authority.getAuthority())
         .toList();
 
-    return Jwts.builder()
+    // Si userDetails es una instancia de CustomUserDetails, obtener email del usuario
+    String email = null;
+    if (userDetails instanceof CustomUserDetails) {
+      CustomUserDetails customUser = (CustomUserDetails) userDetails;
+      email = customUser.getEmail();
+    }
+
+    var builder = Jwts.builder()
         .setClaims(extraClaims)
         .setSubject(userDetails.getUsername())
+        .claim("username", userDetails.getUsername()) // Agregar username explícitamente
         .claim("roles", roles)
         .setIssuedAt(new Date())
         .setId(UUID.randomUUID().toString()) // Identificador único del token (jti)
-        .setExpiration(new Date(System.currentTimeMillis() + expiration * 1000))
-        .signWith(key, SignatureAlgorithm.HS256)
+        .setExpiration(new Date(System.currentTimeMillis() + expiration * 1000));
+
+    // Agregar email si está disponible
+    if (email != null) {
+      builder.claim("email", email);
+    }
+
+    return builder.signWith(key, SignatureAlgorithm.HS256)
         .compact();
   }
 

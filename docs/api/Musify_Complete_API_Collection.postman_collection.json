@@ -1,0 +1,719 @@
+{
+  "info": {
+    "_postman_id": "musify-complete-api-2025",
+    "name": "Musify API - REST & SOAP Complete Collection",
+    "description": "Colección completa de la API Musify que incluye endpoints REST y SOAP/XML. Esta colección demuestra la implementación de patrones arquitectónicos para disponibilidad, rendimiento, seguridad y modificabilidad.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": {
+      "major": 3,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "🔐 Autenticación (REST)",
+      "description": "Endpoints de autenticación y registro de usuarios usando JWT",
+      "item": [
+        {
+          "name": "Registro de Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"usuario_demo\",\n    \"email\": \"demo@musify.com\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Registra un nuevo usuario. Retorna JWT token automáticamente."
+          },
+          "response": []
+        },
+        {
+          "name": "Login Usuario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"jwt_token\", jsonData.accessToken);",
+                  "    console.log(\"JWT Token guardado: \" + jsonData.accessToken.substring(0, 20) + \"...\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"demo\",\n    \"password\": \"demo123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Autentica usuario y obtiene JWT token. El token se guarda automáticamente en la variable de entorno."
+          },
+          "response": []
+        },
+        {
+          "name": "Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"jwt_token\", jsonData.accessToken);",
+                  "    console.log(\"JWT Admin Token guardado\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login con credenciales de administrador"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🎵 Música - REST API",
+      "description": "Endpoints REST para búsqueda y obtención de música desde Spotify",
+      "item": [
+        {
+          "name": "Buscar Música",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/music/spotify/search?q=Billie Eilish&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["music", "spotify", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Billie Eilish",
+                  "description": "Término de búsqueda (artista, canción, álbum)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Número máximo de resultados (1-50)"
+                }
+              ]
+            },
+            "description": "Busca canciones en Spotify por término de búsqueda. Soporta artistas, canciones, álbumes."
+          },
+          "response": []
+        },
+        {
+          "name": "Música Aleatoria",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/music/spotify/random?limit=12",
+              "host": ["{{baseUrl}}"],
+              "path": ["music", "spotify", "random"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "12",
+                  "description": "Número de canciones aleatorias (1-50)"
+                }
+              ]
+            },
+            "description": "Obtiene canciones aleatorias de Spotify para descubrimiento de música."
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Track por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/music/spotify/track/3n3Ppam7vgaVa1iaRUc9Lp",
+              "host": ["{{baseUrl}}"],
+              "path": ["music", "spotify", "track", "3n3Ppam7vgaVa1iaRUc9Lp"]
+            },
+            "description": "Obtiene información detallada de una canción específica por su Spotify ID."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🎧 Reproducción (REST)",
+      "description": "Endpoints para gestión de reproducción de música",
+      "item": [
+        {
+          "name": "Iniciar Reproducción",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"trackId\": \"3n3Ppam7vgaVa1iaRUc9Lp\",\n    \"source\": \"spotify\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/playback/start",
+              "host": ["{{baseUrl}}"],
+              "path": ["playback", "start"]
+            },
+            "description": "Inicia la reproducción de una canción. Retorna la URL del stream."
+          },
+          "response": []
+        },
+        {
+          "name": "Pausar Reproducción",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/playback/pause",
+              "host": ["{{baseUrl}}"],
+              "path": ["playback", "pause"]
+            },
+            "description": "Pausa la reproducción actual del usuario."
+          },
+          "response": []
+        },
+        {
+          "name": "Reanudar Reproducción",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/playback/resume",
+              "host": ["{{baseUrl}}"],
+              "path": ["playback", "resume"]
+            },
+            "description": "Reanuda la reproducción pausada."
+          },
+          "response": []
+        },
+        {
+          "name": "Detener Reproducción",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/playback/stop",
+              "host": ["{{baseUrl}}"],
+              "path": ["playback", "stop"]
+            },
+            "description": "Detiene completamente la reproducción."
+          },
+          "response": []
+        },
+        {
+          "name": "Estado de Reproducción",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/playback/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["playback", "status"]
+            },
+            "description": "Obtiene el estado actual de reproducción del usuario."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📡 SOAP/XML Endpoints",
+      "description": "Endpoints SOAP que aceptan y retornan XML para búsqueda y descubrimiento de música. Implementación complementaria a la API REST.",
+      "item": [
+        {
+          "name": "SOAP - Buscar Música",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/xml",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<searchMusicRequest xmlns=\"http://tfu.com/backend/soap/music\">\n    <query>Billie Eilish</query>\n    <limit>5</limit>\n</searchMusicRequest>",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/soap/music/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["soap", "music", "search"]
+            },
+            "description": "Endpoint SOAP para búsqueda de música. Acepta XML con query y limit, retorna XML con lista de canciones.\n\nNamespace: http://tfu.com/backend/soap/music\n\nParámetros:\n- query: Término de búsqueda (obligatorio)\n- limit: Número de resultados (1-50, opcional, default: 10)"
+          },
+          "response": [
+            {
+              "name": "Búsqueda Exitosa",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/xml",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<searchMusicRequest xmlns=\"http://tfu.com/backend/soap/music\">\n    <query>Billie Eilish</query>\n    <limit>3</limit>\n</searchMusicRequest>",
+                  "options": {
+                    "raw": {
+                      "language": "xml"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/soap/music/search",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["soap", "music", "search"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "xml",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/xml"
+                }
+              ],
+              "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<searchMusicResponse xmlns=\"http://tfu.com/backend/soap/music\">\n    <query>Billie Eilish</query>\n    <totalResults>3</totalResults>\n    <tracks>\n        <track>\n            <id>6Qb7YsAVEy8LvCAdGHpsCG</id>\n            <name>bad guy</name>\n            <artist>Billie Eilish</artist>\n            <album>WHEN WE ALL FALL ASLEEP, WHERE DO WE GO?</album>\n            <duration>194080</duration>\n            <explicit>false</explicit>\n            <previewUrl>https://p.scdn.co/mp3-preview/...</previewUrl>\n        </track>\n        <!-- más tracks... -->\n    </tracks>\n</searchMusicResponse>"
+            }
+          ]
+        },
+        {
+          "name": "SOAP - Buscar por Género",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/xml",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<searchMusicRequest xmlns=\"http://tfu.com/backend/soap/music\">\n    <query>rock</query>\n    <limit>10</limit>\n</searchMusicRequest>",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/soap/music/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["soap", "music", "search"]
+            },
+            "description": "Búsqueda SOAP por género musical (rock, pop, jazz, etc.)"
+          },
+          "response": []
+        },
+        {
+          "name": "SOAP - Buscar Canción Específica",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/xml",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<searchMusicRequest xmlns=\"http://tfu.com/backend/soap/music\">\n    <query>Shape of You Ed Sheeran</query>\n    <limit>3</limit>\n</searchMusicRequest>",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/soap/music/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["soap", "music", "search"]
+            },
+            "description": "Búsqueda SOAP de una canción específica con artista"
+          },
+          "response": []
+        },
+        {
+          "name": "SOAP - Música Aleatoria",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/xml",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<getRandomMusicRequest xmlns=\"http://tfu.com/backend/soap/music\">\n    <limit>8</limit>\n</getRandomMusicRequest>",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/soap/music/random",
+              "host": ["{{baseUrl}}"],
+              "path": ["soap", "music", "random"]
+            },
+            "description": "Endpoint SOAP para obtener música aleatoria. Retorna XML con canciones aleatorias de Spotify.\n\nNamespace: http://tfu.com/backend/soap/music\n\nParámetros:\n- limit: Número de canciones (1-50, opcional, default: 10)"
+          },
+          "response": [
+            {
+              "name": "Música Aleatoria Exitosa",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/xml",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<getRandomMusicRequest xmlns=\"http://tfu.com/backend/soap/music\">\n    <limit>5</limit>\n</getRandomMusicRequest>",
+                  "options": {
+                    "raw": {
+                      "language": "xml"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/soap/music/random",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["soap", "music", "random"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "xml",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/xml"
+                }
+              ],
+              "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<getRandomMusicResponse xmlns=\"http://tfu.com/backend/soap/music\">\n    <totalResults>5</totalResults>\n    <tracks>\n        <track>\n            <id>spotify_id_123</id>\n            <name>Random Song</name>\n            <artist>Random Artist</artist>\n            <album>Random Album</album>\n            <duration>180000</duration>\n            <explicit>false</explicit>\n            <previewUrl>https://p.scdn.co/mp3-preview/...</previewUrl>\n        </track>\n        <!-- más tracks... -->\n    </tracks>\n</getRandomMusicResponse>"
+            }
+          ]
+        },
+        {
+          "name": "SOAP - Validación Query Vacío (Error)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/xml",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<searchMusicRequest xmlns=\"http://tfu.com/backend/soap/music\">\n    <query></query>\n    <limit>5</limit>\n</searchMusicRequest>",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/soap/music/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["soap", "music", "search"]
+            },
+            "description": "Prueba de validación: query vacío debe retornar error 400"
+          },
+          "response": [
+            {
+              "name": "Error - Query Obligatorio",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/xml",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<searchMusicRequest xmlns=\"http://tfu.com/backend/soap/music\">\n    <query></query>\n    <limit>5</limit>\n</searchMusicRequest>",
+                  "options": {
+                    "raw": {
+                      "language": "xml"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/soap/music/search",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["soap", "music", "search"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "xml",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/xml"
+                }
+              ],
+              "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<errorResponse xmlns=\"http://tfu.com/backend/soap/music\">\n    <code>400</code>\n    <message>El parámetro 'query' es obligatorio</message>\n</errorResponse>"
+            }
+          ]
+        },
+        {
+          "name": "SOAP - Validación Límite Fuera de Rango (Error)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/xml",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<getRandomMusicRequest xmlns=\"http://tfu.com/backend/soap/music\">\n    <limit>100</limit>\n</getRandomMusicRequest>",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/soap/music/random",
+              "host": ["{{baseUrl}}"],
+              "path": ["soap", "music", "random"]
+            },
+            "description": "Prueba de validación: límite > 50 debe retornar error 400"
+          },
+          "response": [
+            {
+              "name": "Error - Límite Fuera de Rango",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/xml",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<getRandomMusicRequest xmlns=\"http://tfu.com/backend/soap/music\">\n    <limit>100</limit>\n</getRandomMusicRequest>",
+                  "options": {
+                    "raw": {
+                      "language": "xml"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/soap/music/random",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["soap", "music", "random"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "xml",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/xml"
+                }
+              ],
+              "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<errorResponse xmlns=\"http://tfu.com/backend/soap/music\">\n    <code>400</code>\n    <message>El límite debe estar entre 1 y 50</message>\n</errorResponse>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🏥 Monitoreo y Salud",
+      "description": "Endpoints de Spring Boot Actuator para monitoreo de salud y métricas",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["actuator", "health"]
+            },
+            "description": "Verifica el estado de salud del backend. Usado por NGINX para health checks pasivos."
+          },
+          "response": []
+        },
+        {
+          "name": "Info Aplicación",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/info",
+              "host": ["{{baseUrl}}"],
+              "path": ["actuator", "info"]
+            },
+            "description": "Información general de la aplicación"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

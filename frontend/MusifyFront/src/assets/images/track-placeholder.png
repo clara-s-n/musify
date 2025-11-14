@@ -1,0 +1,7 @@
+<!-- SVG placeholder for tracks -->
+<svg width="50" height="50" xmlns="http://www.w3.org/2000/svg">
+  <rect width="50" height="50" fill="#333" stroke="#555" stroke-width="1"/>
+  <circle cx="25" cy="25" r="8" fill="#666"/>
+  <circle cx="25" cy="25" r="3" fill="#999"/>
+  <text x="25" y="45" text-anchor="middle" fill="#999" font-size="8" font-family="Arial">♪</text>
+</svg>

@@ -1,29 +1,62 @@
-<body class="page">
+<div class="page">
   <header class="header-top">
-    <app-logo></app-logo>
-    <search-bar (searchResults)="searchHome($event)"></search-bar>
+    <div class="header-main">
+      <app-logo></app-logo>
+
+      <!-- Search Mode Toggle -->
+      <div class="search-mode-toggle">
+        <button (click)="toggleSearchMode()" class="toggle-btn" [class.active]="!showEnhancedSearch">
+          🔍 Simple
+        </button>
+        <button (click)="toggleSearchMode()" class="toggle-btn" [class.active]="showEnhancedSearch">
+          🎯 Avanzada
+        </button>
+      </div>
+
+      <!-- Simple Search -->
+      <div *ngIf="!showEnhancedSearch" class="simple-search">
+        <search-bar (searchResults)="searchHome($event)"></search-bar>
+      </div>
+
+      <!-- User Menu -->
+      <div class="user-menu-container">
+        <app-user-menu></app-user-menu>
+      </div>
+    </div>
+
+    <!-- Enhanced Search (Full Width, outside header-main) -->
+    <div *ngIf="showEnhancedSearch" class="enhanced-search-container">
+      <app-enhanced-search></app-enhanced-search>
+    </div>
   </header>
 
-  <main class="content">
-    <div class="row">
-      @for (tracks of randomSongs; track tracks.id) {
-      <mat-card class="music-card">
-        <img
-          mat-card-image
-          [src]="tracks.imageUrl"
-          (click)="playTrack(tracks.name, tracks.artists)"
-          alt="{{ tracks.name }}"
-        />
-        <mat-card-content>
-          <b>{{ tracks.name }}</b>
-          <p>Canción - {{ tracks.artists }}</p>
-        </mat-card-content>
-      </mat-card>
-      }
-    </div>
+  <!-- Main Content (Only show when not in enhanced search mode) -->
+  <main class="content" *ngIf="!showEnhancedSearch">
+    <section class="welcome-section">
+      <h1>🎵 Descubre música increíble</h1>
+      <p>Explora las mejores canciones, artistas y álbumes del momento</p>
+    </section>
+
+    <section class="random-tracks-section">
+      <h2>🎲 Recomendaciones para ti</h2>
+      <div class="row">
+        @for (tracks of randomSongs; track tracks.id) {
+        <mat-card class="music-card">
+          <img mat-card-image [src]="tracks.imageUrl" (click)="playTrack(tracks.name, tracks.artists)"
+            alt="{{ tracks.name }}" class="track-image" />
+          <mat-card-content>
+            <h3 class="track-name">{{ tracks.name }}</h3>
+            <p class="track-info">{{ tracks.artists }}</p>
+            <button (click)="playTrack(tracks.name, tracks.artists)" class="play-button">
+              ▶️ Reproducir
+            </button>
+          </mat-card-content>
+        </mat-card>
+        }
+      </div>
+    </section>
   </main>
 
-  <footer class="player-bar">
-    <audio class="reproductor" [src]="audioURL" controls autoplay></audio>
-  </footer>
-</body>
+  <!-- Development Info Component -->
+  <app-dev-info></app-dev-info>
+</div>

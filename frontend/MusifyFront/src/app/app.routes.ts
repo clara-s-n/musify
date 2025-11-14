@@ -24,6 +24,13 @@ export const routes: Routes = [
     pathMatch: 'full',
     canActivate: [authGuard], // Protect results route
   },
+  {
+    path: 'artist/:id',
+    loadComponent() {
+      return import('./components/artist-detail/artist-detail.component').then((m) => m.ArtistDetailComponent);
+    },
+    canActivate: [authGuard], // Protect artist detail route
+  },
   // Add a catch-all route to redirect to home
   {
     path: '**',
