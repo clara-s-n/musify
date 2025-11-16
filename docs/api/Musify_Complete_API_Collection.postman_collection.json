@@ -1,719 +1,1034 @@
 {
-  "info": {
-    "_postman_id": "musify-complete-api-2025",
-    "name": "Musify API - REST & SOAP Complete Collection",
-    "description": "Colección completa de la API Musify que incluye endpoints REST y SOAP/XML. Esta colección demuestra la implementación de patrones arquitectónicos para disponibilidad, rendimiento, seguridad y modificabilidad.",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": {
-      "major": 3,
-      "minor": 0,
-      "patch": 0
-    }
-  },
-  "auth": {
-    "type": "bearer",
-    "bearer": [
-      {
-        "key": "token",
-        "value": "{{jwt_token}}",
-        "type": "string"
-      }
-    ]
-  },
-  "item": [
-    {
-      "name": "🔐 Autenticación (REST)",
-      "description": "Endpoints de autenticación y registro de usuarios usando JWT",
-      "item": [
-        {
-          "name": "Registro de Usuario",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"username\": \"usuario_demo\",\n    \"email\": \"demo@musify.com\",\n    \"password\": \"password123\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "register"]
-            },
-            "description": "Registra un nuevo usuario. Retorna JWT token automáticamente."
-          },
-          "response": []
-        },
-        {
-          "name": "Login Usuario",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.environment.set(\"jwt_token\", jsonData.accessToken);",
-                  "    console.log(\"JWT Token guardado: \" + jsonData.accessToken.substring(0, 20) + \"...\");",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"username\": \"demo\",\n    \"password\": \"demo123\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login"]
-            },
-            "description": "Autentica usuario y obtiene JWT token. El token se guarda automáticamente en la variable de entorno."
-          },
-          "response": []
-        },
-        {
-          "name": "Login Admin",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.environment.set(\"jwt_token\", jsonData.accessToken);",
-                  "    console.log(\"JWT Admin Token guardado\");",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login"]
-            },
-            "description": "Login con credenciales de administrador"
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "🎵 Música - REST API",
-      "description": "Endpoints REST para búsqueda y obtención de música desde Spotify",
-      "item": [
-        {
-          "name": "Buscar Música",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwt_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/music/spotify/search?q=Billie Eilish&limit=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["music", "spotify", "search"],
-              "query": [
-                {
-                  "key": "q",
-                  "value": "Billie Eilish",
-                  "description": "Término de búsqueda (artista, canción, álbum)"
-                },
-                {
-                  "key": "limit",
-                  "value": "10",
-                  "description": "Número máximo de resultados (1-50)"
-                }
-              ]
-            },
-            "description": "Busca canciones en Spotify por término de búsqueda. Soporta artistas, canciones, álbumes."
-          },
-          "response": []
-        },
-        {
-          "name": "Música Aleatoria",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwt_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/music/spotify/random?limit=12",
-              "host": ["{{baseUrl}}"],
-              "path": ["music", "spotify", "random"],
-              "query": [
-                {
-                  "key": "limit",
-                  "value": "12",
-                  "description": "Número de canciones aleatorias (1-50)"
-                }
-              ]
-            },
-            "description": "Obtiene canciones aleatorias de Spotify para descubrimiento de música."
-          },
-          "response": []
-        },
-        {
-          "name": "Obtener Track por ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwt_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/music/spotify/track/3n3Ppam7vgaVa1iaRUc9Lp",
-              "host": ["{{baseUrl}}"],
-              "path": ["music", "spotify", "track", "3n3Ppam7vgaVa1iaRUc9Lp"]
-            },
-            "description": "Obtiene información detallada de una canción específica por su Spotify ID."
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "🎧 Reproducción (REST)",
-      "description": "Endpoints para gestión de reproducción de música",
-      "item": [
-        {
-          "name": "Iniciar Reproducción",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwt_token}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"trackId\": \"3n3Ppam7vgaVa1iaRUc9Lp\",\n    \"source\": \"spotify\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/playback/start",
-              "host": ["{{baseUrl}}"],
-              "path": ["playback", "start"]
-            },
-            "description": "Inicia la reproducción de una canción. Retorna la URL del stream."
-          },
-          "response": []
-        },
-        {
-          "name": "Pausar Reproducción",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwt_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/playback/pause",
-              "host": ["{{baseUrl}}"],
-              "path": ["playback", "pause"]
-            },
-            "description": "Pausa la reproducción actual del usuario."
-          },
-          "response": []
-        },
-        {
-          "name": "Reanudar Reproducción",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwt_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/playback/resume",
-              "host": ["{{baseUrl}}"],
-              "path": ["playback", "resume"]
-            },
-            "description": "Reanuda la reproducción pausada."
-          },
-          "response": []
-        },
-        {
-          "name": "Detener Reproducción",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwt_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/playback/stop",
-              "host": ["{{baseUrl}}"],
-              "path": ["playback", "stop"]
-            },
-            "description": "Detiene completamente la reproducción."
-          },
-          "response": []
-        },
-        {
-          "name": "Estado de Reproducción",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{jwt_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/playback/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["playback", "status"]
-            },
-            "description": "Obtiene el estado actual de reproducción del usuario."
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "📡 SOAP/XML Endpoints",
-      "description": "Endpoints SOAP que aceptan y retornan XML para búsqueda y descubrimiento de música. Implementación complementaria a la API REST.",
-      "item": [
-        {
-          "name": "SOAP - Buscar Música",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/xml",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<searchMusicRequest xmlns=\"http://tfu.com/backend/soap/music\">\n    <query>Billie Eilish</query>\n    <limit>5</limit>\n</searchMusicRequest>",
-              "options": {
-                "raw": {
-                  "language": "xml"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/soap/music/search",
-              "host": ["{{baseUrl}}"],
-              "path": ["soap", "music", "search"]
-            },
-            "description": "Endpoint SOAP para búsqueda de música. Acepta XML con query y limit, retorna XML con lista de canciones.\n\nNamespace: http://tfu.com/backend/soap/music\n\nParámetros:\n- query: Término de búsqueda (obligatorio)\n- limit: Número de resultados (1-50, opcional, default: 10)"
-          },
-          "response": [
-            {
-              "name": "Búsqueda Exitosa",
-              "originalRequest": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/xml",
-                    "type": "text"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<searchMusicRequest xmlns=\"http://tfu.com/backend/soap/music\">\n    <query>Billie Eilish</query>\n    <limit>3</limit>\n</searchMusicRequest>",
-                  "options": {
-                    "raw": {
-                      "language": "xml"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/soap/music/search",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["soap", "music", "search"]
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "xml",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/xml"
-                }
-              ],
-              "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<searchMusicResponse xmlns=\"http://tfu.com/backend/soap/music\">\n    <query>Billie Eilish</query>\n    <totalResults>3</totalResults>\n    <tracks>\n        <track>\n            <id>6Qb7YsAVEy8LvCAdGHpsCG</id>\n            <name>bad guy</name>\n            <artist>Billie Eilish</artist>\n            <album>WHEN WE ALL FALL ASLEEP, WHERE DO WE GO?</album>\n            <duration>194080</duration>\n            <explicit>false</explicit>\n            <previewUrl>https://p.scdn.co/mp3-preview/...</previewUrl>\n        </track>\n        <!-- más tracks... -->\n    </tracks>\n</searchMusicResponse>"
-            }
-          ]
-        },
-        {
-          "name": "SOAP - Buscar por Género",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/xml",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<searchMusicRequest xmlns=\"http://tfu.com/backend/soap/music\">\n    <query>rock</query>\n    <limit>10</limit>\n</searchMusicRequest>",
-              "options": {
-                "raw": {
-                  "language": "xml"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/soap/music/search",
-              "host": ["{{baseUrl}}"],
-              "path": ["soap", "music", "search"]
-            },
-            "description": "Búsqueda SOAP por género musical (rock, pop, jazz, etc.)"
-          },
-          "response": []
-        },
-        {
-          "name": "SOAP - Buscar Canción Específica",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/xml",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<searchMusicRequest xmlns=\"http://tfu.com/backend/soap/music\">\n    <query>Shape of You Ed Sheeran</query>\n    <limit>3</limit>\n</searchMusicRequest>",
-              "options": {
-                "raw": {
-                  "language": "xml"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/soap/music/search",
-              "host": ["{{baseUrl}}"],
-              "path": ["soap", "music", "search"]
-            },
-            "description": "Búsqueda SOAP de una canción específica con artista"
-          },
-          "response": []
-        },
-        {
-          "name": "SOAP - Música Aleatoria",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/xml",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<getRandomMusicRequest xmlns=\"http://tfu.com/backend/soap/music\">\n    <limit>8</limit>\n</getRandomMusicRequest>",
-              "options": {
-                "raw": {
-                  "language": "xml"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/soap/music/random",
-              "host": ["{{baseUrl}}"],
-              "path": ["soap", "music", "random"]
-            },
-            "description": "Endpoint SOAP para obtener música aleatoria. Retorna XML con canciones aleatorias de Spotify.\n\nNamespace: http://tfu.com/backend/soap/music\n\nParámetros:\n- limit: Número de canciones (1-50, opcional, default: 10)"
-          },
-          "response": [
-            {
-              "name": "Música Aleatoria Exitosa",
-              "originalRequest": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/xml",
-                    "type": "text"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<getRandomMusicRequest xmlns=\"http://tfu.com/backend/soap/music\">\n    <limit>5</limit>\n</getRandomMusicRequest>",
-                  "options": {
-                    "raw": {
-                      "language": "xml"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/soap/music/random",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["soap", "music", "random"]
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "xml",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/xml"
-                }
-              ],
-              "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<getRandomMusicResponse xmlns=\"http://tfu.com/backend/soap/music\">\n    <totalResults>5</totalResults>\n    <tracks>\n        <track>\n            <id>spotify_id_123</id>\n            <name>Random Song</name>\n            <artist>Random Artist</artist>\n            <album>Random Album</album>\n            <duration>180000</duration>\n            <explicit>false</explicit>\n            <previewUrl>https://p.scdn.co/mp3-preview/...</previewUrl>\n        </track>\n        <!-- más tracks... -->\n    </tracks>\n</getRandomMusicResponse>"
-            }
-          ]
-        },
-        {
-          "name": "SOAP - Validación Query Vacío (Error)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/xml",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<searchMusicRequest xmlns=\"http://tfu.com/backend/soap/music\">\n    <query></query>\n    <limit>5</limit>\n</searchMusicRequest>",
-              "options": {
-                "raw": {
-                  "language": "xml"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/soap/music/search",
-              "host": ["{{baseUrl}}"],
-              "path": ["soap", "music", "search"]
-            },
-            "description": "Prueba de validación: query vacío debe retornar error 400"
-          },
-          "response": [
-            {
-              "name": "Error - Query Obligatorio",
-              "originalRequest": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/xml",
-                    "type": "text"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<searchMusicRequest xmlns=\"http://tfu.com/backend/soap/music\">\n    <query></query>\n    <limit>5</limit>\n</searchMusicRequest>",
-                  "options": {
-                    "raw": {
-                      "language": "xml"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/soap/music/search",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["soap", "music", "search"]
-                }
-              },
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "xml",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/xml"
-                }
-              ],
-              "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<errorResponse xmlns=\"http://tfu.com/backend/soap/music\">\n    <code>400</code>\n    <message>El parámetro 'query' es obligatorio</message>\n</errorResponse>"
-            }
-          ]
-        },
-        {
-          "name": "SOAP - Validación Límite Fuera de Rango (Error)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/xml",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<getRandomMusicRequest xmlns=\"http://tfu.com/backend/soap/music\">\n    <limit>100</limit>\n</getRandomMusicRequest>",
-              "options": {
-                "raw": {
-                  "language": "xml"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/soap/music/random",
-              "host": ["{{baseUrl}}"],
-              "path": ["soap", "music", "random"]
-            },
-            "description": "Prueba de validación: límite > 50 debe retornar error 400"
-          },
-          "response": [
-            {
-              "name": "Error - Límite Fuera de Rango",
-              "originalRequest": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/xml",
-                    "type": "text"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<getRandomMusicRequest xmlns=\"http://tfu.com/backend/soap/music\">\n    <limit>100</limit>\n</getRandomMusicRequest>",
-                  "options": {
-                    "raw": {
-                      "language": "xml"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/soap/music/random",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["soap", "music", "random"]
-                }
-              },
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "xml",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/xml"
-                }
-              ],
-              "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<errorResponse xmlns=\"http://tfu.com/backend/soap/music\">\n    <code>400</code>\n    <message>El límite debe estar entre 1 y 50</message>\n</errorResponse>"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "🏥 Monitoreo y Salud",
-      "description": "Endpoints de Spring Boot Actuator para monitoreo de salud y métricas",
-      "item": [
-        {
-          "name": "Health Check",
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/actuator/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["actuator", "health"]
-            },
-            "description": "Verifica el estado de salud del backend. Usado por NGINX para health checks pasivos."
-          },
-          "response": []
-        },
-        {
-          "name": "Info Aplicación",
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/actuator/info",
-              "host": ["{{baseUrl}}"],
-              "path": ["actuator", "info"]
-            },
-            "description": "Información general de la aplicación"
-          },
-          "response": []
-        }
-      ]
-    }
-  ],
-  "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:8080",
-      "type": "string"
-    },
-    {
-      "key": "jwt_token",
-      "value": "",
-      "type": "string"
-    }
-  ]
+	"info": {
+		"_postman_id": "79cade5c-46b0-47a7-82db-e84eac1d09f4",
+		"name": "Musify API Collection",
+		"description": "Colección para probar el backend de Musify",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "28449726"
+	},
+	"item": [
+		{
+			"name": "Spotify",
+			"item": [
+				{
+					"name": "Obtener canciones aleatorias",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:8443/music/spotify/random?limit=10",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"music",
+								"spotify",
+								"random"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "Número de canciones a recuperar (máx: 50)"
+								}
+							]
+						},
+						"description": "Recupera una lista de canciones aleatorias basadas en nuevos lanzamientos de Spotify"
+					},
+					"response": []
+				},
+				{
+					"name": "Buscar canciones",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:8443/music/spotify/search?q=coldplay&limit=20",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"music",
+								"spotify",
+								"search"
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "coldplay",
+									"description": "Término de búsqueda"
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Número máximo de resultados (máx: 50)"
+								}
+							]
+						},
+						"description": "Busca canciones en Spotify por término de búsqueda"
+					},
+					"response": []
+				},
+				{
+					"name": "Reproducir canción",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:8443/music/spotify/play/1mea3bSkSGXuIRvnydlB5b",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8443",
+							"path": [
+								"music",
+								"spotify",
+								"play",
+								"1mea3bSkSGXuIRvnydlB5b"
+							]
+						},
+						"description": "Obtiene los datos necesarios para reproducir una canción específica por su ID de Spotify"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints para integración con Spotify"
+		},
+		{
+			"name": "Autenticación",
+			"item": [
+				{
+					"name": "Registro",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"nuevo_usuario\",\n    \"email\": \"nuevo@ejemplo.com\",\n    \"password\": \"contraseña123\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/auth/register",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"register"
+							]
+						},
+						"description": "Registra un nuevo usuario en el sistema"
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"user@demo.com\",\n    \"password\": \"password\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Inicia sesión con un usuario existente. Devuelve un token JWT."
+					},
+					"response": []
+				},
+				{
+					"name": "Admin Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@demo.com\",\n    \"password\": \"admin\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Inicia sesión con un usuario con rol de administrador"
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Estudiante",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"estudiante@musify.com\",\n    \"password\": \"estudiante123\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Inicia sesión con un usuario estudiante"
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Profesor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"profesor@musify.com\",\n    \"password\": \"profesor456\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Inicia sesión con un usuario profesor"
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Usuario Premium",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"premium@musify.com\",\n    \"password\": \"premium789\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Inicia sesión con un usuario con rol premium"
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Soporte",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"soporte@musify.com\",\n    \"password\": \"soporte2023\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Inicia sesión con un usuario con rol de soporte"
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Desarrollador",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"dev@musify.com\",\n    \"password\": \"dev2023\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Inicia sesión con un usuario desarrollador"
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8080/auth/logout",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"logout"
+							]
+						},
+						"description": "Cierra la sesión actual (invalida el token JWT)"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints relacionados con la autenticación y gestión de usuarios",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"if (pm.response.code === 200) {",
+							"    var jsonData = pm.response.json();",
+							"    if (jsonData.data && jsonData.data.accessToken) {",
+							"        pm.collectionVariables.set(\"token\", jsonData.data.accessToken);",
+							"        console.log(\"Token guardado: \" + jsonData.data.accessToken);",
+							"    }",
+							"}"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Catálogo",
+			"item": [
+				{
+					"name": "Obtener todas las pistas",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/tracks",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"tracks"
+							]
+						},
+						"description": "Obtiene una lista de todas las pistas disponibles en el catálogo"
+					},
+					"response": []
+				},
+				{
+					"name": "Buscar pistas",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/tracks/search?q=pop",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"tracks",
+								"search"
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "pop"
+								}
+							]
+						},
+						"description": "Busca pistas por título, artista o álbum que coincidan con el término de búsqueda"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener pista por ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/tracks/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"tracks",
+								"1"
+							]
+						},
+						"description": "Obtiene los detalles de una pista específica por su ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener pistas por género",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/tracks/by-genre?genre=Pop",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"tracks",
+								"by-genre"
+							],
+							"query": [
+								{
+									"key": "genre",
+									"value": "Pop"
+								}
+							]
+						},
+						"description": "Obtiene una lista de pistas filtradas por género musical"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener pistas por año",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/tracks/by-year?year=2023",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"tracks",
+								"by-year"
+							],
+							"query": [
+								{
+									"key": "year",
+									"value": "2023"
+								}
+							]
+						},
+						"description": "Obtiene una lista de pistas filtradas por año de lanzamiento"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener pistas por artista",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/tracks/by-artist?artist=Ed Sheeran",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"tracks",
+								"by-artist"
+							],
+							"query": [
+								{
+									"key": "artist",
+									"value": "Ed Sheeran"
+								}
+							]
+						},
+						"description": "Obtiene una lista de pistas filtradas por artista"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener pistas premium",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/tracks/premium?premium=true",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"tracks",
+								"premium"
+							],
+							"query": [
+								{
+									"key": "premium",
+									"value": "true"
+								}
+							]
+						},
+						"description": "Obtiene una lista de pistas filtradas por tipo (premium o gratuitas)"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints relacionados con el catálogo musical y búsqueda de pistas"
+		},
+		{
+			"name": "Reproducción",
+			"item": [
+				{
+					"name": "Iniciar reproducción",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"trackId\": 1\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/playback/start",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"playback",
+								"start"
+							]
+						},
+						"description": "Inicia la reproducción de una pista y obtiene la URL de streaming"
+					},
+					"response": []
+				},
+				{
+					"name": "Pausar reproducción",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/playback/pause",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"playback",
+								"pause"
+							]
+						},
+						"description": "Pausa la reproducción actual del usuario"
+					},
+					"response": []
+				},
+				{
+					"name": "Reanudar reproducción",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/playback/resume",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"playback",
+								"resume"
+							]
+						},
+						"description": "Reanuda la reproducción pausada del usuario"
+					},
+					"response": []
+				},
+				{
+					"name": "Detener reproducción",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/playback/stop",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"playback",
+								"stop"
+							]
+						},
+						"description": "Detiene por completo la reproducción actual del usuario"
+					},
+					"response": []
+				},
+				{
+					"name": "Estado de reproducción",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/playback/status",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"playback",
+								"status"
+							]
+						},
+						"description": "Obtiene el estado actual de reproducción del usuario"
+					},
+					"response": []
+				},
+				{
+					"name": "Historial de reproducciones",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/playback/history?page=0&size=10",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"playback",
+								"history"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Obtiene el historial de reproducciones del usuario paginado"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints relacionados con la reproducción de música"
+		},
+		{
+			"name": "Sistema",
+			"item": [
+				{
+					"name": "Estado de salud",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/actuator/health",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"actuator",
+								"health"
+							]
+						},
+						"description": "Verifica el estado de salud del sistema"
+					},
+					"response": []
+				},
+				{
+					"name": "OpenAPI Docs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/v3/api-docs",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"v3",
+								"api-docs"
+							]
+						},
+						"description": "Obtiene la documentación OpenAPI del sistema"
+					},
+					"response": []
+				},
+				{
+					"name": "Swagger UI",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/swagger-ui.html",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"swagger-ui.html"
+							]
+						},
+						"description": "Accede a la interfaz Swagger UI para explorar la API"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints relacionados con el estado y monitoreo del sistema"
+		},
+		{
+			"name": "SOAP/XML Endpoints",
+			"item": [
+				{
+					"name": "Buscar pistas",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "<searchRequest>\r\n    <query>jazz</query>\r\n    <limit>3</limit>\r\n</searchRequest>",
+							"options": {
+								"raw": {
+									"language": "xml"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/soap/music/search",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"soap",
+								"music",
+								"search"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener pistas aletorias",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "<randomRequest>\r\n    <limit>2</limit>\r\n</randomRequest>",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/soap/music/random",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"soap",
+								"music",
+								"random"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints que utilizan SOAP"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	]
 }
