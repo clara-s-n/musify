@@ -2,7 +2,7 @@
 
 > **Proyecto Educacional** - Implementación de patrones arquitectónicos para disponibilidad, rendimiento y seguridad usando Spring Boot + Angular + Spotify API.
 
-[![Arquitectura](https://img.shields.io/badge/Arquitectura-Microservicios-blue)](docs/arquitectura/)
+[![Arquitectura](https://img.shields.io/badge/Arquitectura-Por%20Capas-blue)](docs/arquitectura/)
 [![API](https://img.shields.io/badge/API-REST%20+%20JWT-green)](docs/api/)
 [![Base de Datos](https://img.shields.io/badge/DB-PostgreSQL-orange)](docs/database/)
 [![Frontend](https://img.shields.io/badge/Frontend-Angular-red)](frontend/)
@@ -23,35 +23,45 @@
 
 ### **Stack Tecnológico**
 ```
-📱 Frontend: Angular 17 + Material Design
-🔧 Backend:  Spring Boot 3 + JWT + Resilience4j
-🌐 APIs:     REST + SOAP (Spring Boot Starter Web Services)
-🗄️ Database: PostgreSQL (2 tablas optimizadas)
-🎵 Music API: Spotify Web API (oficial)
-🐳 Deploy:   Docker Compose + NGINX
-📊 Monitor:  Spring Actuator + Health Checks
+📱 Frontend:     Angular 20.3.0 + Material Design
+🔧 Backend:      Spring Boot 3.5.5 + Java 17
+🔐 Autenticación: JWT (jjwt 0.11.5) + Spring Security
+🛡️ Resiliencia:  Resilience4j 2.3.0 (Circuit Breaker, Retry, Rate Limiting)
+🌐 APIs:         REST + SOAP (Spring WS) + OpenAPI 3 (Swagger)
+🗄️ Database:     PostgreSQL 16 (2 tablas optimizadas)
+🎵 Music API:    Spotify Web API (oficial) + YouTube API
+🐳 Deploy:       Docker Compose + NGINX (Load Balancer)
+📊 Monitor:      Spring Actuator + Health Checks
+💾 Cache:        Spring Cache (Cache-Aside Pattern)
 ```
 
-### **Estructura del Proyecto**
+### **Arquitectura por Capas**
 ```
 musify/
 ├── 📄 README.md                 # Este archivo
 ├── 🐳 docker-compose.yaml       # Orquestación de servicios
-├── 📁 backend/                  # API Spring Boot
-├── 📁 frontend/MusifyFront/     # Aplicación Angular
-├── 📁 database/                 # Scripts SQL optimizados
-├── 📁 scripts/                  # Scripts de demostración
-├── 📁 flaky-service/           # Servicio simulado (tolerancia a fallos)
-├── 📁 diagramas/               # Diagramas PlantUML
-└── 📁 docs/                    # 📚 Documentación organizada
-    ├── 📁 api/                 # Guías de API y testing
-    ├── 📁 arquitectura/        # Patrones y diagramas
-    ├── 📁 database/            # Documentación de BD
-    ├── 📁 demos/               # Guías de demostración
-    ├── 📁 deployment/          # Configuración y despliegue
-    ├── 📁 patrones/            # Documentación de patrones
-    ├── 📁 scripts/             # Documentación de scripts
-    └── 📁 spotify/             # Integración Spotify API
+├── 📁 backend/                  # 🏗️ API Spring Boot (Arquitectura por Capas)
+│   └── src/main/java/com/tfu/backend/
+│       ├── 🎮 auth/            # Capa de Controladores (Autenticación)
+│       ├── 🎵 spotify/         # Capa de Controladores (Música)
+│       ├── 👤 artist/          # Capa de Controladores (Artistas)
+│       ├── 🔍 search/          # Capa de Controladores (Búsqueda)
+│       ├── ▶️ player/          # Capa de Controladores (Reproductor)
+│       ├── 📡 soap/            # Capa de Web Services (SOAP)
+│       ├── 🎬 youtube/         # Capa de Servicios (YouTube)
+│       ├── ⚙️ config/          # Capa de Configuración
+│       └── 🔧 common/          # Utilidades Compartidas
+├── 📁 frontend/MusifyFront/     # 🖥️ Aplicación Angular 20.3.0
+├── 📁 database/                 # 🗄️ Scripts SQL optimizados
+├── 📁 scripts/                  # 🧪 Scripts de demostración
+├── 📁 flaky-service/           # 🔄 Servicio simulado (tolerancia a fallos)
+└── 📁 docs/                    # 📚 Documentación consolidada
+    ├── 📁 api/                 # 📖 API_GUIDE.md + Postman Collections
+    ├── 📁 diagramas/           # 📊 Diagramas PlantUML de patrones
+    ├── 📄 ARCHITECTURE_PATTERNS.md  # 🏗️ Patrones implementados
+    ├── 📄 DEMO_GUIDE.md        # 🎯 Guía completa de demos
+    ├── 📄 DEPLOYMENT_GUIDE.md  # 🚀 Despliegue y acceso externo
+    └── 📄 SOAP_GUIDE.md        # 📡 API SOAP/XML completa
 ```
 
 ## 🚀 Inicio Rápido (3 pasos)
@@ -164,6 +174,138 @@ curl -X POST http://localhost:8080/ws \
 - **API Documentation**: OpenAPI 3 + Swagger UI
 - **Logging**: Structured logging with SLF4J
 
+## 📖 Manual de Usuario
+
+### 🎯 **Primeros Pasos**
+
+#### 1️⃣ **Iniciar la Aplicación**
+```bash
+# Clonar repositorio
+git clone https://github.com/clara-s-n/musify.git
+cd musify
+
+# Configurar variables de entorno
+cp .env.example .env
+
+# Iniciar todos los servicios
+docker compose up --build
+```
+
+#### 2️⃣ **Acceder al Frontend**
+1. Abrir navegador en: **http://localhost:4200**
+2. Usar credenciales de prueba:
+   - **Email**: `user@demo.com`
+   - **Password**: `password`
+3. ¡Listo! Ya puedes explorar la aplicación
+
+### 🎵 **Funcionalidades Principales**
+
+#### **🔐 Autenticación y Registro**
+- **Login**: Iniciar sesión con JWT
+- **Registro**: Crear nueva cuenta
+- **Roles**: USER, ADMIN, PREMIUM, EDUCATOR
+- **Seguridad**: Rate limiting (5 intentos/minuto)
+
+#### **🎶 Exploración Musical**
+- **Búsqueda**: Buscar canciones, artistas y álbumes
+- **Spotify Integration**: Resultados reales de Spotify API
+- **Categorías**: Pop, Rock, Hip-Hop, Electronic, Jazz, Classical
+- **Pistas Aleatorias**: Descubrir nueva música
+
+#### **🎧 Reproductor (Simulado)**
+- **Play/Pause**: Control básico de reproducción
+- **Información**: Mostrar datos de la canción actual
+- **Estado**: Simulación de streaming (URLs de muestra)
+
+> ⚠️ **Nota**: La reproducción actual es simulada. Para audio real, se requiere implementar reproductor HTML5 en el frontend.
+
+### 🛠️ **Para Desarrolladores**
+
+#### **🔧 APIs Disponibles**
+
+**REST API** (http://localhost:8080):
+- **Swagger UI**: `/swagger-ui.html`
+- **Endpoints**: Auth, Spotify, Artists, Player, Search
+- **Formato**: JSON con JWT Authentication
+
+**SOAP API** (http://localhost:8080/ws):
+- **Auth WSDL**: `/ws/auth.wsdl`
+- **Music WSDL**: `/ws/music.wsdl`
+- **Formato**: XML tradicional
+
+#### **🧪 Testing y Demostraciones**
+```bash
+# Probar todos los patrones arquitectónicos
+./scripts/run_all_demos.sh
+
+# Demos específicos
+./scripts/demo_retries.sh        # Tolerancia a fallos
+./scripts/demo_security.sh       # JWT + Rate limiting
+./scripts/demo_performance.sh    # Cache + Async
+./scripts/demo_soap_complete.sh  # Web Services SOAP
+```
+
+#### **📊 Monitoreo**
+- **Health**: http://localhost:8080/actuator/health
+- **Métricas**: http://localhost:8080/actuator/metrics
+- **Info**: http://localhost:8080/actuator/info
+
+### 🎯 **Casos de Uso Educacionales**
+
+#### **Para Estudiantes**
+1. **Explorar patrones**: Revisar implementación de Circuit Breaker, Retry, Cache
+2. **Probar APIs**: Usar Postman con colección incluida
+3. **Analizar código**: Estructura por capas en `/backend/src/main/java/`
+4. **Ejecutar demos**: Scripts automatizados en `/scripts/`
+
+#### **Para Profesores**
+1. **Demostrar resilencia**: Usar `./scripts/demo_retries.sh`
+2. **Mostrar escalabilidad**: `./scripts/demo_replication.sh` (2 replicas + NGINX)
+3. **Explicar seguridad**: `./scripts/demo_security.sh` (JWT + Rate limiting)
+4. **Analizar rendimiento**: `./scripts/demo_performance.sh` (Cache + Async)
+
+### 🚨 **Solución de Problemas**
+
+#### **La aplicación no inicia**
+```bash
+# Verificar Docker
+docker --version
+docker compose --version
+
+# Limpiar contenedores
+docker compose down -v
+docker system prune -f
+
+# Reiniciar
+docker compose up --build
+```
+
+#### **Error de autenticación**
+- Verificar credenciales en sección "🔐 Credenciales de Prueba"
+- Revisar que el token JWT no haya expirado
+- Probar con `user@demo.com` / `password`
+
+#### **No aparecen resultados de música**
+- Verificar variables de entorno Spotify en `.env`
+- Comprobar conectividad a internet
+- Revisar logs: `docker compose logs backend-app-1`
+
+#### **Puertos ocupados**
+```bash
+# Verificar puertos en uso
+sudo netstat -tlnp | grep :4200
+sudo netstat -tlnp | grep :8080
+
+# Cambiar puertos en docker-compose.yaml si es necesario
+```
+
+### 📚 **Recursos Adicionales**
+- **📖 Documentación API**: [`docs/api/API_GUIDE.md`](docs/api/API_GUIDE.md)
+- **🏗️ Patrones Implementados**: [`docs/ARCHITECTURE_PATTERNS.md`](docs/ARCHITECTURE_PATTERNS.md)
+- **🎯 Guía de Demos**: [`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md)
+- **🚀 Despliegue**: [`docs/DEPLOYMENT_GUIDE.md`](docs/DEPLOYMENT_GUIDE.md)
+- **📡 SOAP**: [`docs/SOAP_GUIDE.md`](docs/SOAP_GUIDE.md)
+
 ## 🎮 Demostraciones Disponibles
 
 ```bash
@@ -179,13 +321,13 @@ curl -X POST http://localhost:8080/ws \
 ./scripts/demo_soap_complete.sh  # Endpoints SOAP (Auth + Music)
 ```
 
-> 📖 **Guía completa**: [`docs/demos/GUIA_RAPIDA_DEMOS.md`](docs/demos/GUIA_RAPIDA_DEMOS.md)
+> 📖 **Guía completa**: [`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md)
 
 ## 🏫 Propósito Educacional
 
 Este proyecto es ideal para aprender:
 
-- ✅ **Arquitectura de Microservicios** con Spring Boot
+- ✅ **Arquitectura por Capas** con Spring Boot (Controller → Service → Repository)
 - ✅ **APIs REST y SOAP** (integración de múltiples protocolos)
 - ✅ **Patrones de Resiliencia** (Circuit Breaker, Retry, Bulkhead)
 - ✅ **Seguridad en APIs** (JWT, Rate Limiting, CORS)
@@ -215,23 +357,25 @@ Este proyecto es ideal para aprender:
 
 ## 📊 Métricas del Proyecto
 
-### **Backend Optimizado**
-- **Endpoints REST**: 11 (eliminados 24 huérfanos)
-- **Endpoints SOAP**: 2 (Auth + Music Search)
-- **Controladores**: 2 (AuthController + SpotifyController)
-- **Web Services**: 2 (AuthService + MusicService)
-- **Entidades JPA**: 2 (AppUser + AppRole)
-- **Patrones**: 8+ patrones arquitectónicos implementados
+### **Backend por Capas**
+- **Arquitectura**: Por Capas (Controller → Service → Repository)
+- **Endpoints REST**: 15+ distribuidos en 7 controladores
+- **Endpoints SOAP**: 2 Web Services (Auth + Music Search)
+- **Capas**: Controladores (8), Servicios (5), Configuración (3)
+- **Controladores**: AuthController, SpotifyTrackController, ArtistController, SearchController, PlayerController, YoutubeService, SoapMusicController
+- **Patrones**: 11 patrones arquitectónicos implementados
+- **Tecnologías**: Spring Boot 3.5.5 + Java 17 + Resilience4j 2.3.0
 
 ### **Base de Datos Simplificada**
 - **Tablas**: 2 (eliminadas 11 innecesarias)
 - **Registros**: ~12 usuarios de prueba
 - **Reducción**: 94% menos datos, 90% menos tablas
 
-### **Estructura del Frontend**
-- **Angular 20**: Componentes standalone + Signals
-- **Material Design**: UI consistente y moderna
-- **Servicios**: AuthService + SpotifyService (optimizados)
+### **Frontend Angular 20.3.0**
+- **Arquitectura**: Componentes standalone + Signals
+- **UI**: Angular Material Design
+- **Servicios**: AuthService + SpotifyService (integración optimizada)
+- **Características**: Responsive, PWA-ready, TypeScript
 
 ## 🤝 Contribución
 

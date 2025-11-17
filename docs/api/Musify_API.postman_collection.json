@@ -1,0 +1,871 @@
+{
+  "info": {
+    "name": "Musify Complete JSON API Collection",
+    "description": "Colección completa de endpoints REST que devuelven datos en formato JSON de la aplicación Musify",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:8443",
+      "description": "Base URL for Musify API"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "description": "JWT Access Token obtained from login"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "description": "Endpoints para autenticación y gestión de usuarios",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Autentica al usuario y devuelve un token JWT"
+          },
+          "response": [
+            {
+              "name": "Login Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n  },\n  \"message\": \"Login exitoso\",\n  \"timestamp\": \"2024-11-16T10:30:00Z\"\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (responseCode.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.success && jsonData.data && jsonData.data.accessToken) {",
+                  "        pm.collectionVariables.set('accessToken', jsonData.data.accessToken);",
+                  "        pm.test('Token guardado correctamente', function () {",
+                  "            pm.expect(jsonData.data.accessToken).to.be.a('string');",
+                  "        });",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"newuser\",\n  \"email\": \"newuser@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Registra un nuevo usuario y devuelve token JWT"
+          },
+          "response": [
+            {
+              "name": "Register Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"newuser\",\n  \"email\": \"newuser@example.com\",\n  \"password\": \"password123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/register",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"username\": \"newuser\",\n    \"email\": \"newuser@example.com\",\n    \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n  },\n  \"message\": \"Usuario registrado exitosamente\",\n  \"timestamp\": \"2024-11-16T10:30:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Cierra la sesión del usuario e invalida el token JWT"
+          },
+          "response": [
+            {
+              "name": "Logout Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/logout",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "logout"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Sesión cerrada correctamente\",\n  \"timestamp\": \"2024-11-16T10:30:00Z\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Spotify Music",
+      "description": "Endpoints para búsqueda y descubrimiento de música a través de Spotify",
+      "item": [
+        {
+          "name": "Get Random Tracks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/music/spotify/random?limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "music",
+                "spotify",
+                "random"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Número de canciones aleatorias (1-50)"
+                }
+              ]
+            },
+            "description": "Obtiene canciones aleatorias de Spotify"
+          },
+          "response": [
+            {
+              "name": "Random Tracks Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/music/spotify/random?limit=10",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "music",
+                    "spotify",
+                    "random"
+                  ],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"4uLU6hMCjMI75M1A2tKUQC\",\n      \"name\": \"Never Gonna Give You Up\",\n      \"artist\": \"Rick Astley\",\n      \"album\": \"Whenever You Need Somebody\",\n      \"duration_ms\": 213573,\n      \"preview_url\": \"https://p.scdn.co/mp3-preview/...\",\n      \"external_urls\": {\n        \"spotify\": \"https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC\"\n      }\n    }\n  ],\n  \"message\": \"Canciones aleatorias obtenidas correctamente\",\n  \"timestamp\": \"2024-11-16T10:30:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Truly Random Tracks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/music/spotify/truly-random?limit=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "music",
+                "spotify",
+                "truly-random"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "12",
+                  "description": "Número de canciones verdaderamente aleatorias (1-50)"
+                }
+              ]
+            },
+            "description": "Obtiene canciones verdaderamente aleatorias usando múltiples estrategias"
+          }
+        },
+        {
+          "name": "Search Tracks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/music/spotify/search?q=jazz&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "music",
+                "spotify",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "jazz",
+                  "description": "Término de búsqueda"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Límite de resultados (1-50)"
+                }
+              ]
+            },
+            "description": "Busca canciones en Spotify según término de búsqueda"
+          }
+        },
+        {
+          "name": "Get Track Playback",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/music/spotify/play/4uLU6hMCjMI75M1A2tKUQC",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "music",
+                "spotify",
+                "play",
+                "4uLU6hMCjMI75M1A2tKUQC"
+              ]
+            },
+            "description": "Obtiene datos de reproducción para una canción específica"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Artist Management",
+      "description": "Endpoints para obtener información de artistas y sus canciones",
+      "item": [
+        {
+          "name": "Get Artist Tracks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/artists/4Z8W4fKeB5YxbusRsdQVPb/tracks?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "artists",
+                "4Z8W4fKeB5YxbusRsdQVPb",
+                "tracks"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "Número de página (0-indexed)"
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "description": "Canciones por página (1-50)"
+                }
+              ]
+            },
+            "description": "Obtiene canciones de un artista específico con paginación"
+          },
+          "response": [
+            {
+              "name": "Artist Tracks Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/artists/4Z8W4fKeB5YxbusRsdQVPb/tracks?page=0&size=20",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "artists",
+                    "4Z8W4fKeB5YxbusRsdQVPb",
+                    "tracks"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "size",
+                      "value": "20"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"artistName\": \"Radiohead\",\n    \"artistId\": \"4Z8W4fKeB5YxbusRsdQVPb\",\n    \"tracks\": [\n      {\n        \"id\": \"15WzzleFcV4WOsCdbnKmnZ\",\n        \"name\": \"Creep\",\n        \"album\": \"Pablo Honey\",\n        \"duration_ms\": 238946,\n        \"preview_url\": \"https://p.scdn.co/mp3-preview/...\"\n      }\n    ],\n    \"pagination\": {\n      \"currentPage\": 0,\n      \"pageSize\": 20,\n      \"totalPages\": 3,\n      \"totalElements\": 50,\n      \"hasNext\": true,\n      \"hasPrevious\": false\n    }\n  },\n  \"message\": \"Se encontraron 20 canciones del artista 'Radiohead' (página 1 de 3)\",\n  \"timestamp\": \"2024-11-16T10:30:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Artist Top Tracks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/artists/4Z8W4fKeB5YxbusRsdQVPb/top-tracks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "artists",
+                "4Z8W4fKeB5YxbusRsdQVPb",
+                "top-tracks"
+              ]
+            },
+            "description": "Obtiene las top 10 canciones más populares de un artista"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categorized Search",
+      "description": "Endpoints para búsqueda categorizada que devuelve resultados por tipo",
+      "item": [
+        {
+          "name": "Search Categorized",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/search?q=jazz&limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "jazz",
+                  "description": "Término de búsqueda"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Límite de resultados por categoría (1-20)"
+                }
+              ]
+            },
+            "description": "Busca contenido organizado por categorías: songs, albums, artists, concerts"
+          },
+          "response": [
+            {
+              "name": "Categorized Search Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/search?q=jazz&limit=5",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "search"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": "jazz"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "5"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"query\": \"jazz\",\n    \"songs\": [\n      {\n        \"id\": \"song1\",\n        \"name\": \"Take Five\",\n        \"artist\": \"Dave Brubeck Quartet\",\n        \"album\": \"Time Out\"\n      }\n    ],\n    \"albums\": [\n      {\n        \"id\": \"album1\",\n        \"name\": \"Kind of Blue\",\n        \"artist\": \"Miles Davis\",\n        \"year\": 1959\n      }\n    ],\n    \"artists\": [\n      {\n        \"id\": \"artist1\",\n        \"name\": \"Miles Davis\",\n        \"genres\": [\"jazz\", \"cool jazz\"]\n      }\n    ],\n    \"concerts\": [\n      {\n        \"id\": \"concert1\",\n        \"name\": \"Jazz Festival 2024\",\n        \"date\": \"2024-12-15\",\n        \"venue\": \"Blue Note\"\n      }\n    ]\n  },\n  \"message\": \"Búsqueda categorizada completada para 'jazz'\",\n  \"timestamp\": \"2024-11-16T10:30:00Z\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Player Control",
+      "description": "Endpoints para control avanzado del reproductor",
+      "item": [
+        {
+          "name": "Play Track",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/player/play?trackId=4uLU6hMCjMI75M1A2tKUQC",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "player",
+                "play"
+              ],
+              "query": [
+                {
+                  "key": "trackId",
+                  "value": "4uLU6hMCjMI75M1A2tKUQC",
+                  "description": "ID de la canción a reproducir"
+                }
+              ]
+            },
+            "description": "Inicia la reproducción de una canción específica"
+          }
+        },
+        {
+          "name": "Play Next",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/player/next",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "player",
+                "next"
+              ]
+            },
+            "description": "Reproduce la siguiente canción en la cola"
+          }
+        },
+        {
+          "name": "Play Previous",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/player/previous",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "player",
+                "previous"
+              ]
+            },
+            "description": "Reproduce la canción anterior en la cola"
+          }
+        },
+        {
+          "name": "Pause",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/player/pause",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "player",
+                "pause"
+              ]
+            },
+            "description": "Pausa la reproducción actual"
+          }
+        },
+        {
+          "name": "Resume",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/player/resume",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "player",
+                "resume"
+              ]
+            },
+            "description": "Reanuda la reproducción pausada"
+          }
+        },
+        {
+          "name": "Stop",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/player/stop",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "player",
+                "stop"
+              ]
+            },
+            "description": "Detiene la reproducción"
+          }
+        },
+        {
+          "name": "Get Player State",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/player/state",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "player",
+                "state"
+              ]
+            },
+            "description": "Obtiene el estado actual del reproductor"
+          },
+          "response": [
+            {
+              "name": "Player State Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/player/state",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "player",
+                    "state"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"currentTrack\": {\n      \"id\": \"4uLU6hMCjMI75M1A2tKUQC\",\n      \"name\": \"Never Gonna Give You Up\",\n      \"artist\": \"Rick Astley\"\n    },\n    \"isPlaying\": true,\n    \"isPaused\": false,\n    \"position\": 45000,\n    \"duration\": 213573,\n    \"volume\": 0.8,\n    \"shuffle\": false,\n    \"repeat\": false,\n    \"queue\": []\n  },\n  \"message\": \"Estado del reproductor obtenido\",\n  \"timestamp\": \"2024-11-16T10:30:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Toggle Shuffle",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/player/shuffle",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "player",
+                "shuffle"
+              ]
+            },
+            "description": "Activa o desactiva el modo shuffle"
+          }
+        },
+        {
+          "name": "Toggle Repeat",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/player/repeat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "player",
+                "repeat"
+              ]
+            },
+            "description": "Activa o desactiva el modo repeat"
+          }
+        }
+      ]
+    },
+    {
+      "name": "YouTube Audio",
+      "description": "Endpoints para streaming de audio desde YouTube",
+      "item": [
+        {
+          "name": "Get Audio Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/youtube/audio?url=https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "youtube",
+                "audio"
+              ],
+              "query": [
+                {
+                  "key": "url",
+                  "value": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                  "description": "URL del video de YouTube"
+                }
+              ]
+            },
+            "description": "Obtiene información de audio de un video de YouTube"
+          }
+        },
+        {
+          "name": "Stream Audio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/youtube/stream?url=https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "youtube",
+                "stream"
+              ],
+              "query": [
+                {
+                  "key": "url",
+                  "value": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                  "description": "URL del video de YouTube"
+                }
+              ]
+            },
+            "description": "Stream de audio directo desde YouTube"
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Script global para configuración previa a cada request",
+          "console.log('Executing request to:', pm.request.url);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Tests globales para todas las respuestas JSON",
+          "pm.test('Status code is success', function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 202]);",
+          "});",
+          "",
+          "pm.test('Response has JSON format', function () {",
+          "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+          "});",
+          "",
+          "pm.test('Response has ApiResponse structure', function () {",
+          "    const jsonData = pm.response.json();",
+          "    pm.expect(jsonData).to.have.property('success');",
+          "    pm.expect(jsonData).to.have.property('timestamp');",
+          "    if (jsonData.success) {",
+          "        pm.expect(jsonData).to.have.property('data');",
+          "        pm.expect(jsonData).to.have.property('message');",
+          "    }",
+          "});"
+        ]
+      }
+    }
+  ]
+}
