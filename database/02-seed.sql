@@ -17,6 +17,17 @@ INSERT INTO app_users (username, password, email, enabled) VALUES
   -- Usuario educacional (coincide con el contexto académico)
   ('estudiante', '{noop}estudiante123', 'estudiante@musify.com', true),
   ('profesor', '{noop}profesor456', 'profesor@musify.com', true),
+  ('francisco', '{noop}francisco123', 'francisco@musify.com', true),
+  ('nicolas', '{noop}nicolas123', 'nicolas@musify.com', true),
+  ('martina', '{noop}martina123', 'martina@musify.com', true),
+  ('juana', '{noop}juana123', 'juana@musify.com', true),
+  ('gabi', '{noop}gabi123', 'gabi@musify.com', true),
+  ('lucas', '{noop}lucas123', 'lucas@musify.com', true),
+  ('mateo', '{noop}mateo123', 'mateo@musify.com', true),
+  ('juan', '{noop}juan123', 'juan@musify.com', true),
+  ('natasha', '{noop}natasha123', 'natasha@musify.com', true),
+  ('emi', '{noop}emi1lio23', 'emilio@musify.com', true),
+  ('nico', '{noop}nico123', 'nico@musify.com', true),
   
   -- Usuario para pruebas de funciones premium
   ('premium', '{noop}premium789', 'premium@musify.com', true),
